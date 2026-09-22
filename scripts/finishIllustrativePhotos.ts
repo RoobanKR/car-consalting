@@ -1,10 +1,11 @@
 import './env';
+import { config } from '@/lib/server/config';
 import mongoose from 'mongoose';
 import { readFile } from 'node:fs/promises';
 import { Car } from '@/lib/server/models/Car';
 import { getCloudinary } from '@/lib/server/cloudinary';
 
-if (!process.env.MONGODB_URI || new URL(process.env.MONGODB_URI).pathname.slice(1) !== 'car-consulting') throw new Error('Expected the car-consulting database.');
+if (!config.mongoUri || new URL(config.mongoUri).pathname.slice(1) !== 'car-consulting') throw new Error('Expected the car-consulting database.');
 const cloudinary = getCloudinary();
 if (!cloudinary) throw new Error('Cloudinary is not configured.');
 
@@ -34,7 +35,7 @@ async function put(car: any, buffer: Buffer, image: any, key: string) {
   console.log(`${car.model}: ${car.images.length} photos`);
 }
 
-await mongoose.connect(process.env.MONGODB_URI);
+await mongoose.connect(config.mongoUri);
 try {
   const slavia = await Car.findOne({ seedKey: 'carwise-demo-10' });
   const glanza = await Car.findOne({ seedKey: 'carwise-demo-18' });

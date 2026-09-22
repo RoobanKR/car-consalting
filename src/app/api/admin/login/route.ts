@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { ApiError, readJson, route } from '@/lib/server/http';
 import { rateLimit } from '@/lib/server/rateLimit';
 import { User, publicUser } from '@/lib/server/models/User';
+import { config } from '@/lib/server/config';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,7 +13,7 @@ export const POST = route(async request => {
   const body = (await readJson(request)) as { email?: unknown; password?: unknown };
   const email = String(body?.email || '').trim().toLowerCase();
   const password = String(body?.password || '');
-  if (!process.env.JWT_SECRET) throw new ApiError(503, 'Sign-in is not configured.');
+  if (!config.jwtSecret) throw new ApiError(503, 'Sign-in is not configured.');
 
   // Accounts in the users collection come first; the .env admin stays as a fallback
   // so an existing deployment keeps working before any user has been created.
@@ -20,15 +21,15 @@ export const POST = route(async request => {
   if (account && await bcrypt.compare(password, account.passwordHash)) {
     const user = publicUser(account);
     return NextResponse.json({
-      token: jwt.sign({ role: account.role, email, userId: String(account._id) }, process.env.JWT_SECRET, { expiresIn: '8h' }),
+      token: jwt.sign({ role: account.role, email, userId: String(account._id) }, config.jwtSecret, { expiresIn: '8h' }),
       user
     });
   }
 
-  const envConfigured = process.env.ADMIN_EMAIL && process.env.ADMIN_PASSWORD_HASH;
-  if (envConfigured && email === process.env.ADMIN_EMAIL!.toLowerCase() && await bcrypt.compare(password, process.env.ADMIN_PASSWORD_HASH!)) {
+  const builtInConfigured = config.adminEmail && config.adminPasswordHash;
+  if (builtInConfigured && email === config.adminEmail.toLowerCase() && await bcrypt.compare(password, config.adminPasswordHash)) {
     return NextResponse.json({
-      token: jwt.sign({ role: 'superadmin', email }, process.env.JWT_SECRET, { expiresIn: '8h' }),
+      token: jwt.sign({ role: 'superadmin', email }, config.jwtSecret, { expiresIn: '8h' }),
       user: { _id: 'env-admin', firstName: 'Carwise', lastName: 'Admin', email, phone: '', address: '', role: 'superadmin' as const }
     });
   }

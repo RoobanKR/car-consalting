@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import { connectDB } from './db';
+import { config } from './config';
 
 export class ApiError extends Error {
   constructor(public status: number, message: string, public details?: unknown) {
@@ -29,6 +30,9 @@ type Handler<C> = (request: Request, context: C) => Promise<NextResponse> | Next
 export function route<C = unknown>(handler: Handler<C>): Handler<C> {
   return async (request, context) => {
     try {
+      // A misconfigured deployment is by far the most common cause of a 500 here,
+      // so say which piece is missing instead of returning a generic error.
+      if (!config.mongoUri) throw new ApiError(503, 'Database is not configured: no connection string in config.ts or MONGODB_URI.');
       await connectDB();
       return await handler(request, context);
     } catch (error) {
@@ -36,6 +40,10 @@ export function route<C = unknown>(handler: Handler<C>): Handler<C> {
         return NextResponse.json(error.details ? { error: error.message, details: error.details } : { error: error.message }, { status: error.status });
       }
       console.error(error);
+      // Mongoose could not reach the cluster: usually an IP allowlist or a bad URI.
+      if (error instanceof Error && /ServerSelection|ENOTFOUND|ECONNREFUSED|querySrv|authentication failed/i.test(`${error.name} ${error.message}`)) {
+        return NextResponse.json({ error: 'Cannot reach the database. Check MONGODB_URI and that this host is allowed in MongoDB Atlas network access.' }, { status: 503 });
+      }
       return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 500 });
     }
   };
@@ -46,10 +54,10 @@ export type Session = { role: 'admin' | 'superadmin'; email: string; userId?: st
 /** Reads and verifies the bearer token. Both roles may reach the admin workspace. */
 export function requireAdmin(request: Request): Session {
   const token = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '');
-  if (!token || !process.env.JWT_SECRET) throw new ApiError(401, 'Sign in required.');
+  if (!token || !config.jwtSecret) throw new ApiError(401, 'Sign in required.');
   let payload: Session;
   try {
-    payload = jwt.verify(token, process.env.JWT_SECRET) as Session;
+    payload = jwt.verify(token, config.jwtSecret) as Session;
   } catch {
     throw new ApiError(401, 'Session expired. Please sign in again.');
   }

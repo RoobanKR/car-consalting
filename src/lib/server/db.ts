@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { config } from './config';
 
 type ConnectionCache = { conn: typeof mongoose | null; promise: Promise<typeof mongoose> | null };
 
@@ -10,8 +11,8 @@ const cache: ConnectionCache = globalCache._carwiseMongoose ?? (globalCache._car
 
 export async function connectDB() {
   if (cache.conn) return cache.conn;
-  const uri = process.env.MONGODB_URI;
-  if (!uri) throw new Error('MONGODB_URI is required. See .env.example');
+  const uri = config.mongoUri;
+  if (!uri) throw new Error('No MongoDB connection string. Set MONGODB_URI or fill it in src/lib/server/config.ts');
   if (!cache.promise) cache.promise = mongoose.connect(uri);
   try {
     cache.conn = await cache.promise;

@@ -1,11 +1,12 @@
 import './env';
+import { config } from '@/lib/server/config';
 import mongoose from 'mongoose';
 import { Car } from '@/lib/server/models/Car';
 import { buildCarSlug, uniqueCarSlug } from '@/lib/server/slug';
 
 async function main() {
-  if (!process.env.MONGODB_URI) throw new Error('MONGODB_URI is required.');
-  await mongoose.connect(process.env.MONGODB_URI!);
+  if (!config.mongoUri) throw new Error('No MongoDB connection string in src/lib/server/config.ts');
+  await mongoose.connect(config.mongoUri);
   await Car.init();
   const cars = await Car.find().sort({ createdAt: 1 });
   let updated = 0;

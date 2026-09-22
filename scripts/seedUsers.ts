@@ -1,4 +1,5 @@
 import './env';
+import { config } from '@/lib/server/config';
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import { User } from '@/lib/server/models/User';
@@ -9,8 +10,8 @@ const seedUsers = [
 ];
 
 async function main() {
-  if (!process.env.MONGODB_URI) throw new Error('MONGODB_URI is required.');
-  await mongoose.connect(process.env.MONGODB_URI);
+  if (!config.mongoUri) throw new Error('No MongoDB connection string in src/lib/server/config.ts');
+  await mongoose.connect(config.mongoUri);
   await User.init();
   let added = 0;
   let skipped = 0;

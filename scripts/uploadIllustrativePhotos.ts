@@ -1,4 +1,5 @@
 import './env';
+import { config } from '@/lib/server/config';
 import mongoose from 'mongoose';
 import { readFile } from 'node:fs/promises';
 import { Car } from '@/lib/server/models/Car';
@@ -16,7 +17,7 @@ const picks = {
 
 const cloudinary = getCloudinary();
 if (!cloudinary) throw new Error('Cloudinary is not configured.');
-if (!process.env.MONGODB_URI || new URL(process.env.MONGODB_URI).pathname.slice(1) !== 'car-consulting') throw new Error('Expected the car-consulting database.');
+if (!config.mongoUri || new URL(config.mongoUri).pathname.slice(1) !== 'car-consulting') throw new Error('Expected the car-consulting database.');
 const candidates: any = JSON.parse(await readFile(new URL('./illustrativePhotosCandidates.json', import.meta.url), 'utf8'));
 const maxUploads = Number(process.argv.find(arg => arg.startsWith('--limit='))?.split('=')[1] || Infinity);
 let uploaded = 0;
@@ -38,7 +39,7 @@ async function uploadSource(source: any, publicId: string): Promise<any> {
   throw new Error('Photo source rate limited after retries.');
 }
 
-await mongoose.connect(process.env.MONGODB_URI);
+await mongoose.connect(config.mongoUri);
 try {
   for (const [model, indices] of Object.entries(picks)) {
     if (uploaded >= maxUploads) break;

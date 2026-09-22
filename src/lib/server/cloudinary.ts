@@ -1,9 +1,10 @@
 import { v2 as cloudinary } from 'cloudinary';
+import { config } from './config';
 
 export function getCloudinary() {
-  const { CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET } = process.env;
-  if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_API_KEY || !CLOUDINARY_API_SECRET) return null;
-  cloudinary.config({ cloud_name: CLOUDINARY_CLOUD_NAME, api_key: CLOUDINARY_API_KEY, api_secret: CLOUDINARY_API_SECRET });
+  const { cloudName, apiKey, apiSecret } = config.cloudinary;
+  if (!cloudName || !apiKey || !apiSecret) return null;
+  cloudinary.config({ cloud_name: cloudName, api_key: apiKey, api_secret: apiSecret });
   return cloudinary;
 }
 

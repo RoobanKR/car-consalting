@@ -1,4 +1,5 @@
 import './env';
+import { config } from '@/lib/server/config';
 import mongoose from 'mongoose';
 import { Car } from '@/lib/server/models/Car';
 import { buildCarSlug, uniqueCarSlug } from '@/lib/server/slug';
@@ -17,10 +18,10 @@ const inventory = [
 ];
 
 async function main() {
-  if (!process.env.MONGODB_URI) throw new Error('MONGODB_URI is required.');
-  const databaseName = new URL(process.env.MONGODB_URI!).pathname.slice(1);
+  if (!config.mongoUri) throw new Error('No MongoDB connection string in src/lib/server/config.ts');
+  const databaseName = new URL(config.mongoUri).pathname.slice(1);
   if (databaseName !== 'car-consulting') throw new Error(`Refusing to seed ${databaseName || 'an unnamed database'}; expected car-consulting.`);
-  await mongoose.connect(process.env.MONGODB_URI!);
+  await mongoose.connect(config.mongoUri);
   await Car.init();
 
   const template = await Car.findOne({ 'images.0': { $exists: true } }).lean();
