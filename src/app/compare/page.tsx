@@ -1,10 +1,12 @@
 'use client';
-import { useEffect, useState } from 'react';
+import type { CSSProperties } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ArrowRight, ArrowUpRight, CalendarDays, CarFront, Check, Fuel, Gauge, GitCompare, MapPin, Settings2, X } from 'lucide-react';
 import SiteHeader from '@/components/SiteHeader';
 import SiteFooter from '@/components/SiteFooter';
-import { api, Car, carHref, money } from '@/lib/api';
+import { Car, carHref, money } from '@/lib/api';
+import { useCarsByIds } from '@/lib/queries';
 import { useCompare } from '@/lib/compare';
 
 const SPECS: { key: string; label: string; icon: React.ReactNode; get: (car: Car) => string }[] = [
@@ -19,12 +21,13 @@ const SPECS: { key: string; label: string; icon: React.ReactNode; get: (car: Car
 ];
 
 export default function ComparePage() {
+  const router = useRouter();
   const { compareIds, ready, remove, clear, max } = useCompare();
-  const [cars, setCars] = useState<Car[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  useEffect(() => { api<Car[]>('/cars').then(setCars).catch(caught => setError(caught.message)).finally(() => setLoading(false)); }, []);
+  // Nothing left to compare once cleared, so go straight back to the catalog.
+  function clearAndBrowse() { clear(); router.push('/cars'); }
+  const { data: cars = [], isLoading, error: queryError } = useCarsByIds(compareIds, ready);
+  const loading = ready && compareIds.length > 0 && isLoading;
+  const error = queryError instanceof Error ? queryError.message : '';
 
   const selected = compareIds.map(id => cars.find(car => car._id === id)).filter((car): car is Car => Boolean(car));
   const busy = loading || !ready;
@@ -34,7 +37,7 @@ export default function ComparePage() {
   const leastDriven = selected.length ? Math.min(...selected.map(car => car.kmDriven)) : 0;
 
   return <><SiteHeader/><main className="catalog-page">
-    <div className="container catalog-breadcrumb"><span>Home</span><span>/</span><strong>Compare</strong></div>
+    <nav className="container catalog-breadcrumb" aria-label="Breadcrumb"><Link href="/">Home</Link><span aria-hidden="true">/</span><strong aria-current="page">Compare</strong></nav>
     <div className="container compare-page">
       <div className="compare-page-head">
         <div>
@@ -42,12 +45,12 @@ export default function ComparePage() {
           <h1>Compare cars <GitCompare size={26} strokeWidth={2.4}/></h1>
           <p>{busy ? 'Loading…' : `${selected.length} of ${max} cars selected${selected.length ? ' — best value highlighted in each row.' : ''}`}</p>
         </div>
-        {ready && compareIds.length > 0 && <button type="button" className="favorites-clear" onClick={clear}><X size={14}/> Clear all</button>}
+        {ready && compareIds.length > 0 && <button type="button" className="favorites-clear" onClick={clearAndBrowse}><X size={14}/> Clear all</button>}
       </div>
 
       {error ? <div className="catalog-empty"><CarFront size={38}/><h2>Could not load cars</h2><p>{error}</p></div>
         : !busy && selected.length === 0 ? <div className="catalog-empty"><GitCompare size={38}/><h2>Nothing to compare yet</h2><p>Add up to {max} cars from the listings to see them side by side here.</p><Link href="/cars" className="favorites-cta">Browse cars <ArrowRight size={17}/></Link></div>
-        : selected.length > 0 && <div className="compare-grid-wrap"><div className="compare-grid" style={{ gridTemplateColumns: `160px repeat(${selected.length}, minmax(220px, 1fr))` }}>
+        : selected.length > 0 && <div className="compare-grid-wrap"><div className="compare-grid" style={{ '--compare-cols': selected.length } as CSSProperties}>
             <div className="compare-header-spec"/>
             {selected.map(car => <div key={car._id} className="compare-header-car">
               <button type="button" className="compare-header-remove" onClick={() => remove(car._id)} aria-label={`Remove ${car.brand} ${car.model}`}><X size={14}/></button>
@@ -56,7 +59,7 @@ export default function ComparePage() {
               <small><MapPin size={12}/>{car.location}</small>
             </div>)}
 
-            {SPECS.map(spec => <div key={spec.key} className="compare-row" style={{ gridColumn: `1 / span ${selected.length + 1}`, gridTemplateColumns: `160px repeat(${selected.length}, minmax(220px, 1fr))` }}>
+            {SPECS.map(spec => <div key={spec.key} className="compare-row" style={{ gridColumn: `1 / span ${selected.length + 1}` }}>
               <div className="compare-row-label">{spec.icon}{spec.label}</div>
               {selected.map(car => {
                 const value = spec.get(car);
@@ -65,12 +68,12 @@ export default function ComparePage() {
               })}
             </div>)}
 
-            {featureUnion.length > 0 && <div className="compare-row features-row" style={{ gridColumn: `1 / span ${selected.length + 1}`, gridTemplateColumns: `160px repeat(${selected.length}, minmax(220px, 1fr))` }}>
+            {featureUnion.length > 0 && <div className="compare-row features-row" style={{ gridColumn: `1 / span ${selected.length + 1}` }}>
               <div className="compare-row-label"><Check size={13}/>Features</div>
               {selected.map(car => <div key={car._id} className="compare-cell compare-features"><ul>{featureUnion.map(feature => <li key={feature} className={car.features?.includes(feature) ? 'has' : 'miss'}><Check size={12}/>{feature}</li>)}</ul></div>)}
             </div>}
 
-            <div className="compare-row actions-row" style={{ gridColumn: `1 / span ${selected.length + 1}`, gridTemplateColumns: `160px repeat(${selected.length}, minmax(220px, 1fr))` }}>
+            <div className="compare-row actions-row" style={{ gridColumn: `1 / span ${selected.length + 1}` }}>
               <div className="compare-row-label"/>
               {selected.map(car => <div key={car._id} className="compare-cell"><Link href={carHref(car)} className="compare-view-link">View &amp; enquire <ArrowUpRight size={15}/></Link></div>)}
             </div>

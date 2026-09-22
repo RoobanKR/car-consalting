@@ -24,8 +24,11 @@
 .market-header-cta:hover{background:var(--market-violet)}
 .market-menu{display:none;border:0;background:transparent;color:var(--market-ink)}
 .catalog-page{background:var(--market-bg);min-height:72vh;padding-bottom:90px}
-.catalog-breadcrumb{display:flex;gap:8px;padding-top:20px;padding-bottom:20px;color:#9a9eb1;font-size:11px}
-.catalog-breadcrumb strong{color:#636a80}
+.catalog-breadcrumb{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:20px;padding-bottom:20px;color:#9a9eb1;font-size:11px}
+.catalog-breadcrumb strong{color:#636a80;font-weight:700}
+.catalog-breadcrumb a{color:#6f7590;border-radius:4px;transition:color .15s}
+.catalog-breadcrumb a:hover{color:var(--market-violet);text-decoration:underline}
+.catalog-breadcrumb a:focus-visible{outline:2px solid var(--market-violet);outline-offset:2px}
 .catalog-layout{display:grid;grid-template-columns:264px minmax(0,1fr);gap:24px;align-items:flex-start}
 .catalog-sidebar{background:#fff;border:1px solid var(--market-line);border-radius:12px;box-shadow:0 4px 18px #24244a09;position:sticky;top:18px;max-height:calc(100vh - 36px);overflow:auto;scrollbar-width:thin}
 .catalog-filter-head{display:flex;justify-content:space-between;align-items:center;padding:22px 20px;border-bottom:1px solid var(--market-line)}
@@ -281,7 +284,7 @@ body:has(.compare-bar) .back-to-top{bottom:110px}
 .favorites-note{margin:0 0 22px;padding:12px 16px;background:#fff5f7;border:1px solid #f2d3dc;border-radius:10px;color:#8a4759;font-size:12px;line-height:1.55}
 .favorites-cta{display:inline-flex;align-items:center;gap:8px;background:var(--market-violet);color:#fff;padding:12px 20px;border-radius:8px;font-size:12px;font-weight:800;margin-top:10px}
 .favorites-cta:hover{background:#3a2ec9}
-@media(max-width:650px){.favorites-head{flex-direction:column;align-items:stretch}.favorites-clear{align-self:flex-start}.market-card-fav{width:34px;height:34px;top:8px;right:8px}}
+@media(max-width:650px){.favorites-head{flex-direction:column;align-items:stretch}.favorites-clear{align-self:flex-start}.market-card-fav{width:38px;height:38px}}
 .photo-disclosure{display:flex;flex-wrap:wrap;gap:7px 13px;padding:14px 16px;margin-top:12px;border:1px solid #e3e8e2;border-radius:8px;background:#f8faf7;color:#59645c;font-size:12px;line-height:1.5}
 .photo-disclosure strong{color:#1c3428}.photo-disclosure span{white-space:normal}.photo-disclosure a{text-decoration:underline;text-underline-offset:2px}
 /* Compact home sections and functional location selector. */
@@ -320,8 +323,8 @@ body:has(.compare-bar) .back-to-top{bottom:110px}
 @media(max-width:650px){
   .market-location{min-width:0;padding:6px 8px}
   .market-location>span{display:grid;gap:0}
-  .market-location small{display:none}
-  .market-location strong{max-width:88px;font-size:11px}
+  .market-location small{display:block}
+  .market-location strong{max-width:none;font-size:13px}
   .market-location>svg:last-child{display:none}
   .market-location-menu{width:max(100%,180px);left:auto;right:0}
   .market-home-section,.market-featured,.market-steps{padding:30px 0}
@@ -366,3 +369,121 @@ body:has(.compare-bar) .back-to-top{bottom:110px}
 @media(max-width:650px){.catalog-sidebar.open{max-height:100vh;overflow-y:auto}.catalog-sort-trigger{min-width:0;width:100%}.catalog-sort{width:100%}}
 
 @media(max-width:650px){.car-lightbox{padding:8px}.car-lightbox-topbar{font-size:11px}.car-lightbox-dots button{max-width:none}.market-card-tools{left:8px;right:8px;bottom:13px}.market-card-dots{padding:22px 8px 0}}
+
+/* ---- catalog: skeletons + load more (replaces numbered pagination) ---- */
+.car-card-skeleton{min-height:322px;border-radius:12px;border:1px solid #e7e8ee;background:linear-gradient(100deg,#f2f3f7 30%,#e8eaf2 50%,#f2f3f7 70%);background-size:220% 100%;animation:skeleton-sweep 1.3s ease-in-out infinite}
+@keyframes skeleton-sweep{from{background-position:180% 0}to{background-position:-40% 0}}
+.catalog-card-grid-more{margin-top:14px}
+.catalog-loadmore{display:flex;flex-direction:column;align-items:center;gap:12px;padding:30px 0 6px;text-align:center}
+.catalog-loadmore-meta{margin:0;font-size:12px;color:#7f8698}
+.catalog-loadmore-meta strong{color:var(--market-ink)}
+.catalog-loadmore-track{width:min(260px,70%);height:4px;border-radius:4px;background:#e6e8f0;overflow:hidden}
+.catalog-loadmore-track span{display:block;height:100%;border-radius:4px;background:var(--market-violet);transition:width .35s ease}
+.catalog-loadmore-button{display:inline-flex;align-items:center;gap:8px;min-height:46px;padding:0 22px;border:1px solid #dcdef0;border-radius:9px;background:#fff;color:var(--market-violet);font-size:13px;font-weight:800;cursor:pointer;transition:background .15s,border-color .15s,transform .15s}
+.catalog-loadmore-button:hover:not(:disabled){background:#f5f4ff;border-color:var(--market-violet);transform:translateY(-1px)}
+.catalog-loadmore-button:disabled{opacity:.6;cursor:progress}
+.catalog-loadmore-end{margin:0;font-size:12px;color:#99a0b2}
+
+/* ---- detail gallery: favourite + compare, matching the cards ---- */
+.main-car-image{position:relative}
+.detail-gallery-tools{position:absolute;right:12px;bottom:12px;display:flex;gap:9px;z-index:3}
+.detail-gallery-tools .market-card-fav,.detail-gallery-tools .market-card-cmp{width:42px;height:42px}
+.detail-card-toast{top:auto;bottom:64px;right:12px}
+
+/* ================= mobile-first refinements =================
+   The site is used mostly on phones, so these tighten the small-screen
+   layouts rather than simply shrinking the desktop one. */
+@media(max-width:650px){
+  /* comfortable tap targets everywhere (Apple/Google both recommend ~44px) */
+  .market-hero-search button,.catalog-mobile-filter,.catalog-loadmore-button,
+  .catalog-pill-grid button,.budget-chips button,.catalog-multi-trigger,
+  .catalog-sort-trigger,.catalog-select-trigger{min-height:44px}
+  .catalog-check{min-height:40px;align-items:center}
+  .catalog-check input{width:19px;height:19px}
+
+  /* one clear column of cars instead of two cramped ones */
+  .catalog-card-grid{grid-template-columns:1fr;gap:14px}
+  .market-car-image{height:210px}
+  .market-car-content{padding:14px 14px 0}
+  .market-car-content h3{font-size:15px;line-height:1.35}
+  .market-card-price strong{font-size:20px}
+  .market-card-price span{display:inline}
+  .market-spec-pills span{font-size:10px;padding:5px 8px}
+  .market-card-footer{display:flex;align-items:center;justify-content:space-between}
+  .market-card-footer a{margin-top:0}
+  .car-card-skeleton{min-height:330px}
+
+  /* sticky filter/sort bar so they are always reachable while scrolling */
+  .catalog-toolbar{position:sticky;top:0;z-index:20;background:var(--market-bg);padding:10px 0;margin:0 -2px;flex-direction:row;align-items:center;gap:10px}
+  .catalog-toolbar .catalog-mobile-filter{flex:1;justify-content:center}
+  .catalog-toolbar .catalog-sort{flex:1}
+  .catalog-sort-trigger{width:100%;justify-content:space-between}
+
+  .catalog-results-head h1{font-size:24px;letter-spacing:-1px}
+  .catalog-search input{font-size:16px} /* 16px stops iOS zooming on focus */
+  .catalog-input input,.admin-search input{font-size:16px}
+  .catalog-loadmore{padding:22px 0 4px}
+  .catalog-loadmore-button{width:100%;justify-content:center}
+
+  /* compare bar: readable and thumb-friendly rather than a squeezed row */
+  .compare-bar{padding:10px 0 12px}
+  .compare-bar-inner{gap:10px}
+  .compare-bar-meta{width:100%;justify-content:center;font-size:11px}
+  .compare-bar-cars{gap:8px;overflow-x:auto;flex-wrap:nowrap;padding-bottom:2px;-webkit-overflow-scrolling:touch}
+  .compare-bar-chip{flex:none;max-width:170px}
+  .compare-bar-actions{width:100%;display:flex;gap:10px}
+  .compare-bar-actions .compare-bar-clear{flex:1;min-height:44px}
+  .compare-bar-actions .compare-bar-cta{flex:2;min-height:44px;justify-content:center}
+
+  /* detail page */
+  .detail-gallery-tools{right:10px;bottom:10px}
+  .detail-gallery-tools .market-card-fav,.detail-gallery-tools .market-card-cmp{width:40px;height:40px}
+  .thumb-grid{gap:7px}
+}
+
+@media(max-width:390px){
+  .catalog-card-grid{grid-template-columns:1fr}
+  .market-car-image{height:196px}
+  .compare-bar-chip{max-width:146px}
+}
+
+/* tablets: two columns rather than one wide one */
+@media(min-width:651px) and (max-width:1130px){
+  .catalog-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
+/* ---- compare: column widths now live here, so mobile can fit every selected car ---- */
+.compare-grid,.compare-row{grid-template-columns:160px repeat(var(--compare-cols,2),minmax(220px,1fr))}
+
+/* ---- mobile fixes ---- */
+@media(max-width:650px){
+  /* Header: menu on the left, logo beside it, location on its own full-width row. */
+  .market-header-main{height:auto;flex-wrap:wrap;gap:10px 12px;padding-top:11px;padding-bottom:11px}
+  .market-logo{order:0;margin-right:auto}
+  .market-menu{order:1;display:grid;place-items:center;width:40px;height:40px;margin-right:-8px}
+  .market-location-wrap{order:2;width:100%;flex:1 0 100%}
+  .market-location{width:100%;min-width:0;padding:11px 12px;font-size:11px;justify-content:flex-start}
+  /* the label and chevron were hidden to save space; there is room for them now */
+  .market-location>span,.market-location>svg:last-child{display:block}
+  .market-location>svg:last-child{margin-left:auto}
+  .market-location-menu{left:0;right:0;width:auto}
+  /* header is two rows tall now, so anchor the nav dropdown to its bottom edge */
+  .market-nav{top:100%}
+
+  /* Filters: the panel scrolls, and each option list shows every choice
+     instead of trapping Model / Fuel type in a 175px inner scroller. */
+  .catalog-sidebar.open{display:block;overflow-y:auto;-webkit-overflow-scrolling:touch;max-height:100vh;max-height:100dvh;overscroll-behavior:contain}
+  .catalog-sidebar.open .catalog-filter-head{position:sticky;top:0;z-index:2;background:#fff}
+  .catalog-sidebar.open .catalog-mobile-done{position:sticky;bottom:10px}
+  .catalog-choice-list{max-height:none;overflow:visible}
+  .catalog-multi-list{max-height:260px}
+
+  /* Compare: fit all three cars on screen rather than scrolling to find the third. */
+  .compare-grid{min-width:0}
+  .compare-grid,.compare-row{grid-template-columns:68px repeat(var(--compare-cols,2),minmax(0,1fr))}
+  /* long single words like TRANSMISSION have to break inside a narrow label column */
+  .compare-header-spec,.compare-row>*:first-child{font-size:9px;letter-spacing:0;overflow-wrap:anywhere;line-height:1.35}
+  .compare-row>*{padding-left:8px;padding-right:8px}
+  .compare-grid h3,.compare-header-car strong{font-size:12px}
+  .compare-grid-wrap{overflow-x:visible}
+}

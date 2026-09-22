@@ -1,11 +1,13 @@
 'use client';
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { ArrowRight, CalendarDays, CarFront, Check, ChevronDown, ChevronLeft, ChevronRight, MapPin, RotateCcw, Search, SlidersHorizontal, X } from 'lucide-react';
+import { ArrowRight, CalendarDays, CarFront, Check, ChevronDown, MapPin, RotateCcw, Search, SlidersHorizontal, X } from 'lucide-react';
 import SiteHeader from '@/components/SiteHeader';
 import SiteFooter from '@/components/SiteFooter';
 import CarCard from '@/components/CarCard';
-import { api, Car, money } from '@/lib/api';
+import { money } from '@/lib/api';
+import { useCarsInfinite, useCarFacets, CARS_PER_PAGE, type CarFilters } from '@/lib/queries';
 
 const sortLabels: Record<string, string> = { newest: 'Newest first', 'price-asc': 'Price: low to high', 'price-desc': 'Price: high to low', 'year-desc': 'Newest model year' };
 const kmOptions: { value: string; label: string }[] = [
@@ -67,9 +69,6 @@ function MultiSelect({ options, value, onChange, placeholder, ariaLabel, icon, s
 
 function CarsContent() {
   const params = useSearchParams();
-  const [cars, setCars] = useState<Car[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [search, setSearch] = useState(params.get('search') || '');
   const [brand, setBrand] = useState<string[]>(parseList(params.get('brand')));
   const [model, setModel] = useState<string[]>(parseList(params.get('model')));
@@ -84,70 +83,38 @@ function CarsContent() {
   const [sort, setSort] = useState('newest');
   const [sortOpen, setSortOpen] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
-  const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState<number>(Number(params.get('pageSize')) || 15);
 
-  useEffect(() => { api<Car[]>('/cars').then(setCars).catch(error => setError(error.message)).finally(() => setLoading(false)); }, []);
+  // Filters live in the query key, so every combination is cached separately and
+  // going back to a previous set of filters renders from cache instead of refetching.
+  const filters = useMemo<CarFilters>(() => ({
+    search, brand, model, fuelType: fuel, transmission, bodyType, location,
+    year: yearFilter, minPrice, maxPrice, maxKm, sort
+  }), [search, brand, model, fuel, transmission, bodyType, location, yearFilter, minPrice, maxPrice, maxKm, sort]);
 
-  const brands = useMemo(() => [...new Set(cars.map(car => car.brand))].sort(), [cars]);
-  const models = useMemo(() => [...new Set(cars.filter(car => brand.length === 0 || brand.includes(car.brand)).map(car => car.model))].sort(), [cars, brand]);
-  const bodyTypes = useMemo(() => [...new Set(cars.map(car => car.bodyType).filter(Boolean))].sort(), [cars]);
-  const locationList = useMemo(() => [...new Set(cars.map(car => car.location))].sort(), [cars]);
-  const yearList = useMemo(() => [...new Set(cars.map(car => car.year))].sort((a, b) => b - a), [cars]);
-  const priceCeiling = useMemo(() => Math.max(1000000, Math.ceil(Math.max(...cars.map(car => car.price), 1000000) / 1000000) * 1000000), [cars]);
+  const carsQuery = useCarsInfinite(filters);
+  const { data: facets } = useCarFacets(brand);
+  const cars = useMemo(() => carsQuery.data?.pages.flatMap(entry => entry.items) ?? [], [carsQuery.data]);
+  const total = carsQuery.data?.pages[0]?.total ?? 0;
+  const loading = carsQuery.isLoading;
+  const error = carsQuery.error instanceof Error ? carsQuery.error.message : '';
+  const inventoryTotal = facets?.total ?? 0;
+
+  const brands = facets?.brands ?? [];
+  const models = facets?.models ?? [];
+  const bodyTypes = facets?.bodyTypes ?? [];
+  const fuelCounts = useMemo(() => new Map((facets?.fuelTypes ?? []).map(item => [item.value, item.count])), [facets]);
+  const priceCeiling = facets?.priceCeiling ?? 3000000;
   const priceStep = 50000;
   const effectiveMax = maxPrice ?? priceCeiling;
-  const locationOptions = useMemo(() => locationList.map(city => ({ value: city, label: city, count: cars.filter(car => car.location === city).length })), [locationList, cars]);
-  const yearOptions = useMemo(() => yearList.map(year => ({ value: String(year), label: String(year), count: cars.filter(car => car.year === year).length })), [yearList, cars]);
-
-  const filtered = useMemo(() => cars.filter(car => {
-    const query = search.trim().toLowerCase();
-    return (!query || `${car.brand} ${car.model} ${car.location}`.toLowerCase().includes(query))
-      && (brand.length === 0 || brand.includes(car.brand))
-      && (model.length === 0 || model.includes(car.model))
-      && (fuel.length === 0 || fuel.includes(car.fuelType))
-      && (transmission.length === 0 || transmission.includes(car.transmission))
-      && (bodyType.length === 0 || bodyType.includes(car.bodyType))
-      && (location.length === 0 || location.includes(car.location))
-      && (yearFilter.length === 0 || yearFilter.includes(String(car.year)))
-      && car.price >= minPrice && car.price <= effectiveMax
-      && (!maxKm || car.kmDriven <= Number(maxKm));
-  }).sort((a, b) => sort === 'price-asc' ? a.price - b.price : sort === 'price-desc' ? b.price - a.price : sort === 'year-desc' ? b.year - a.year : new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()),
-  [cars, search, brand, model, fuel, transmission, bodyType, location, yearFilter, minPrice, effectiveMax, maxKm, sort]);
+  const locationOptions = useMemo(() => (facets?.locations ?? []).map(item => ({ value: item.value, label: item.value, count: item.count })), [facets]);
+  const yearOptions = useMemo(() => (facets?.years ?? []).map(item => ({ value: item.value, label: item.value, count: item.count })), [facets]);
 
   const activeCount = (search ? 1 : 0)
     + brand.length + model.length + fuel.length + transmission.length + bodyType.length + location.length + yearFilter.length
     + (minPrice > 0 ? 1 : 0) + (maxPrice !== null && maxPrice < priceCeiling ? 1 : 0)
     + (maxKm ? 1 : 0);
 
-  useEffect(() => { setPage(1); }, [search, brand, model, fuel, transmission, bodyType, location, yearFilter, minPrice, maxPrice, maxKm, sort, pageSize]);
-  const total = filtered.length;
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
-  const currentPage = Math.min(page, totalPages);
-  const pageStart = (currentPage - 1) * pageSize;
   const resultsRef = useRef<HTMLElement>(null);
-  const firstScrollSkip = useRef(true);
-  useEffect(() => {
-    if (firstScrollSkip.current) { firstScrollSkip.current = false; return; }
-    const target = resultsRef.current;
-    if (!target) return;
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      const top = target.getBoundingClientRect().top + window.scrollY - 16;
-      const dest = Math.max(0, top);
-      try { window.scrollTo({ top: dest, behavior: 'smooth' }); }
-      catch { window.scrollTo(0, dest); }
-    }));
-  }, [currentPage]);
-  const paginated = filtered.slice(pageStart, pageStart + pageSize);
-  const pageNumbers: (number | 'gap')[] = totalPages <= 7
-    ? Array.from({ length: totalPages }, (_, index) => index + 1)
-    : (() => {
-        const set = new Set<number>([1, totalPages, currentPage, currentPage - 1, currentPage + 1]);
-        const sorted = [...set].filter(n => n >= 1 && n <= totalPages).sort((a, b) => a - b);
-        const output: (number | 'gap')[] = [];
-        sorted.forEach((n, index) => { if (index > 0 && n - sorted[index - 1] > 1) output.push('gap'); output.push(n); });
-        return output;
-      })();
 
   const clear = () => {
     setSearch(''); setBrand([]); setModel([]); setFuel([]); setTransmission([]); setBodyType([]); setLocation([]); setYearFilter([]);
@@ -179,7 +146,7 @@ function CarsContent() {
   ];
 
   return <><SiteHeader/><main className="catalog-page">
-    <div className="container catalog-breadcrumb"><span>Home</span><span>/</span><strong>Used cars</strong></div>
+    <nav className="container catalog-breadcrumb" aria-label="Breadcrumb"><Link href="/">Home</Link><span aria-hidden="true">/</span><strong aria-current="page">Used cars</strong></nav>
     <div className="container catalog-layout">
       <aside className={showFilters ? 'catalog-sidebar open' : 'catalog-sidebar'} aria-label="Car filters">
         <div className="catalog-filter-head"><div><SlidersHorizontal size={19}/><strong>Filters</strong>{activeCount > 0 && <span>{activeCount}</span>}</div><div className="catalog-filter-actions"><button type="button" onClick={clear}>Clear all</button><button className="catalog-filter-close" type="button" aria-label="Close filters" onClick={() => setShowFilters(false)}><X size={19}/></button></div></div>
@@ -197,11 +164,11 @@ function CarsContent() {
         <div className="catalog-filter-section">
           <h3>Make &amp; model</h3>
           <label className="catalog-input"><Search size={17}/><input value={search} onChange={event => setSearch(event.target.value)} placeholder="Search brand or model"/></label>
-          <div className="catalog-choice-list">{brands.length ? brands.map(item => <label key={item} className="catalog-check"><input type="checkbox" checked={brand.includes(item)} onChange={() => { setBrand(current => toggleValue(current, item)); setModel([]); }}/><span>{item}</span><small>{cars.filter(car => car.brand === item).length}</small></label>) : <p className="catalog-filter-empty">Brands appear when cars are added.</p>}</div>
-          {brand.length > 0 && models.length > 0 && <div className="catalog-submodel"><span className="catalog-submodel-label">Models</span><div className="catalog-choice-list">{models.map(item => <label key={item} className="catalog-check"><input type="checkbox" checked={model.includes(item)} onChange={() => setModel(current => toggleValue(current, item))}/><span>{item}</span><small>{cars.filter(car => car.model === item).length}</small></label>)}</div></div>}
+          <div className="catalog-choice-list">{brands.length ? brands.map(item => <label key={item.value} className="catalog-check"><input type="checkbox" checked={brand.includes(item.value)} onChange={() => { setBrand(current => toggleValue(current, item.value)); setModel([]); }}/><span>{item.value}</span><small>{item.count}</small></label>) : <p className="catalog-filter-empty">Brands appear when cars are added.</p>}</div>
+          {brand.length > 0 && models.length > 0 && <div className="catalog-submodel"><span className="catalog-submodel-label">Models</span><div className="catalog-choice-list">{models.map(item => <label key={item.value} className="catalog-check"><input type="checkbox" checked={model.includes(item.value)} onChange={() => setModel(current => toggleValue(current, item.value))}/><span>{item.value}</span><small>{item.count}</small></label>)}</div></div>}
         </div>
-        <div className="catalog-filter-section"><h3>Body type</h3><div className="catalog-pill-grid">{bodyTypes.length ? bodyTypes.map(item => <button key={item} className={bodyType.includes(item) ? 'active' : ''} onClick={() => setBodyType(current => toggleValue(current, item))}>{item}</button>) : <p className="catalog-filter-empty">No body types yet.</p>}</div></div>
-        <div className="catalog-filter-section"><h3>Fuel type</h3><div className="catalog-choice-list">{fuelOptions.map(item => <label key={item} className="catalog-check"><input type="checkbox" checked={fuel.includes(item)} onChange={() => setFuel(current => toggleValue(current, item))}/><span>{item}</span><small>{cars.filter(car => car.fuelType === item).length}</small></label>)}</div></div>
+        <div className="catalog-filter-section"><h3>Body type</h3><div className="catalog-pill-grid">{bodyTypes.length ? bodyTypes.map(item => <button key={item.value} className={bodyType.includes(item.value) ? 'active' : ''} onClick={() => setBodyType(current => toggleValue(current, item.value))}>{item.value}</button>) : <p className="catalog-filter-empty">No body types yet.</p>}</div></div>
+        <div className="catalog-filter-section"><h3>Fuel type</h3><div className="catalog-choice-list">{fuelOptions.map(item => <label key={item} className="catalog-check"><input type="checkbox" checked={fuel.includes(item)} onChange={() => setFuel(current => toggleValue(current, item))}/><span>{item}</span><small>{fuelCounts.get(item) ?? 0}</small></label>)}</div></div>
         <div className="catalog-filter-section"><h3>Transmission</h3><div className="catalog-pill-grid">{transmissionOptions.map(item => <button key={item} className={transmission.includes(item) ? 'active' : ''} onClick={() => setTransmission(current => toggleValue(current, item))}>{item}</button>)}</div></div>
         <div className="catalog-filter-section">
           <h3>Model year</h3>
@@ -215,25 +182,22 @@ function CarsContent() {
           <h3>Location</h3>
           <MultiSelect options={locationOptions} value={location} onChange={setLocation} placeholder="All locations" ariaLabel="Location" icon={<MapPin size={16}/>} searchable/>
         </div>
-        <button className="catalog-mobile-done" onClick={() => setShowFilters(false)}>Show {filtered.length} cars <ArrowRight size={17}/></button>
+        <button className="catalog-mobile-done" onClick={() => setShowFilters(false)}>Show {total} cars <ArrowRight size={17}/></button>
       </aside>
       <section className="catalog-results" ref={resultsRef}>
         <div className="catalog-search"><Search size={20}/><input value={search} onChange={event => setSearch(event.target.value)} aria-label="Search cars" placeholder="Search cars by brand, model or location"/>{search && <button aria-label="Clear search" onClick={() => setSearch('')}><X size={17}/></button>}</div>
         <div className="catalog-benefits"><div><span className="benefit-icon purple"><CarFront size={21}/></span><strong>Explore available cars</strong><small>Browse price, photos &amp; details</small></div><div><span className="benefit-icon orange"><Search size={21}/></span><strong>Find your match</strong><small>Use filters to narrow the list</small></div><div><span className="benefit-icon blue"><Check size={21}/></span><strong>Enquire simply</strong><small>No booking or payment needed</small></div></div>
-        <div className="catalog-results-head"><div><span className="catalog-eyebrow">CARWISE COLLECTION</span><h1>Used cars in India</h1><p>{loading ? 'Loading available cars…' : `${filtered.length} ${filtered.length === 1 ? 'car' : 'cars'} found`}</p></div><div className="catalog-toolbar"><button className="catalog-mobile-filter" onClick={() => setShowFilters(true)}><SlidersHorizontal size={17}/> Filters {activeCount > 0 && `(${activeCount})`}</button><div className="catalog-sort"><button type="button" className="catalog-sort-trigger" aria-expanded={sortOpen} onClick={() => setSortOpen(!sortOpen)}><span>Sort by</span><strong>{sortLabels[sort]}</strong><ChevronDown size={16}/></button>{sortOpen && <div className="catalog-sort-menu" role="menu">{[["newest", "Newest first"], ["price-asc", "Price: low to high"], ["price-desc", "Price: high to low"], ["year-desc", "Newest model year"]].map(([value, label]) => <button key={value} type="button" role="menuitemradio" aria-checked={sort === value} className={sort === value ? "selected" : ""} onClick={() => { setSort(value); setSortOpen(false); }}>{label}{sort === value && <Check size={15}/>}</button>)}</div>}</div></div></div>
+        <div className="catalog-results-head"><div><span className="catalog-eyebrow">CARWISE COLLECTION</span><h1>Used cars in India</h1><p>{loading ? 'Loading available cars…' : `${total} ${total === 1 ? 'car' : 'cars'} found`}</p></div><div className="catalog-toolbar"><button className="catalog-mobile-filter" onClick={() => setShowFilters(true)}><SlidersHorizontal size={17}/> Filters {activeCount > 0 && `(${activeCount})`}</button><div className="catalog-sort"><button type="button" className="catalog-sort-trigger" aria-expanded={sortOpen} onClick={() => setSortOpen(!sortOpen)}><span>Sort by</span><strong>{sortLabels[sort]}</strong><ChevronDown size={16}/></button>{sortOpen && <div className="catalog-sort-menu" role="menu">{[["newest", "Newest first"], ["price-asc", "Price: low to high"], ["price-desc", "Price: high to low"], ["year-desc", "Newest model year"]].map(([value, label]) => <button key={value} type="button" role="menuitemradio" aria-checked={sort === value} className={sort === value ? "selected" : ""} onClick={() => { setSort(value); setSortOpen(false); }}>{label}{sort === value && <Check size={15}/>}</button>)}</div>}</div></div></div>
         {activeChips.length > 0 && <div className="catalog-active-filters">{activeChips.map(chip => <button key={chip.key} onClick={chip.onRemove}>{chip.label} <X size={13}/></button>)}<button className="catalog-clear-chip" onClick={clear}><RotateCcw size={13}/> Clear all</button></div>}
-        {error ? <div className="catalog-empty"><CarFront size={42}/><h2>Cars could not load</h2><p>{error}</p></div> : !loading && !filtered.length ? <div className="catalog-empty"><CarFront size={42}/><h2>{cars.length ? 'No cars match these filters' : 'Cars are coming soon'}</h2><p>{cars.length ? 'Try changing a filter to see more available cars.' : 'Our available cars will appear here as soon as the team adds them.'}</p>{cars.length > 0 && <button onClick={clear}>Clear filters <ArrowRight size={17}/></button>}</div> : <>
-          <div className="catalog-card-grid">{paginated.map(car => <CarCard key={car._id} car={car}/>)}</div>
-          {total > 0 && <div className="catalog-pagination">
-            <div className="catalog-pagination-meta"><span>Showing</span><strong>{pageStart + 1}–{Math.min(pageStart + pageSize, total)}</strong><span>of {total} {total === 1 ? 'car' : 'cars'}</span></div>
-            <div className="catalog-pagination-controls">
-              <CustomSelect ariaLabel="Cars per page" options={[15, 40, 70, 100].map(n => ({ value: String(n), label: `${n} per page` }))} value={String(pageSize)} onChange={value => setPageSize(Number(value))}/>
-              {totalPages > 1 && <div className="catalog-pagination-nav" role="navigation" aria-label="Pagination">
-                <button type="button" onClick={() => setPage(current => Math.max(1, current - 1))} disabled={currentPage === 1} aria-label="Previous page"><ChevronLeft size={16}/></button>
-                {pageNumbers.map((entry, index) => entry === 'gap' ? <span key={`gap-${index}`} className="catalog-pagination-gap">…</span> : <button key={entry} type="button" onClick={() => setPage(entry)} aria-current={entry === currentPage ? 'page' : undefined} className={entry === currentPage ? 'active' : ''}>{entry}</button>)}
-                <button type="button" onClick={() => setPage(current => Math.min(totalPages, current + 1))} disabled={currentPage === totalPages} aria-label="Next page"><ChevronRight size={16}/></button>
-              </div>}
-            </div>
+        {error ? <div className="catalog-empty"><CarFront size={42}/><h2>Cars could not load</h2><p>{error}</p></div> : loading ? <div className="catalog-card-grid">{Array.from({ length: 6 }, (_, index) => <div key={index} className="car-card-skeleton" aria-hidden="true"/>)}</div> : !cars.length ? <div className="catalog-empty"><CarFront size={42}/><h2>{inventoryTotal ? 'No cars match these filters' : 'Cars are coming soon'}</h2><p>{inventoryTotal ? 'Try changing a filter to see more available cars.' : 'Our available cars will appear here as soon as the team adds them.'}</p>{inventoryTotal > 0 && <button onClick={clear}>Clear filters <ArrowRight size={17}/></button>}</div> : <>
+          <div className="catalog-card-grid">{cars.map(car => <CarCard key={car._id} car={car}/>)}</div>
+          {carsQuery.isFetchingNextPage && <div className="catalog-card-grid catalog-card-grid-more">{Array.from({ length: 3 }, (_, index) => <div key={index} className="car-card-skeleton" aria-hidden="true"/>)}</div>}
+          {total > 0 && <div className="catalog-loadmore">
+            <p className="catalog-loadmore-meta">Showing <strong>{cars.length}</strong> of {total} {total === 1 ? 'car' : 'cars'}</p>
+            <div className="catalog-loadmore-track" aria-hidden="true"><span style={{ width: `${total ? Math.min(100, (cars.length / total) * 100) : 0}%` }}/></div>
+            {carsQuery.hasNextPage
+              ? <button type="button" className="catalog-loadmore-button" onClick={() => carsQuery.fetchNextPage()} disabled={carsQuery.isFetchingNextPage}>{carsQuery.isFetchingNextPage ? 'Loading…' : `Load ${Math.min(CARS_PER_PAGE, total - cars.length)} more`} <ChevronDown size={16}/></button>
+              : <p className="catalog-loadmore-end">You have seen every matching car.</p>}
           </div>}
         </>}
       </section>

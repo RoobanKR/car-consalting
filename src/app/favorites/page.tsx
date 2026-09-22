@@ -1,27 +1,25 @@
 'use client';
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Heart, RotateCcw } from 'lucide-react';
 import SiteHeader from '@/components/SiteHeader';
 import SiteFooter from '@/components/SiteFooter';
 import CarCard from '@/components/CarCard';
-import { api, Car } from '@/lib/api';
+import { Car } from '@/lib/api';
+import { useCarsByIds } from '@/lib/queries';
 import { useFavorites } from '@/lib/favorites';
 
 export default function FavoritesPage() {
   const { favorites, ready, clear } = useFavorites();
-  const [cars, setCars] = useState<Car[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  useEffect(() => { api<Car[]>('/cars').then(setCars).catch(caught => setError(caught.message)).finally(() => setLoading(false)); }, []);
+  const { data: cars = [], isLoading, error: queryError } = useCarsByIds(favorites, ready);
+  const loading = ready && favorites.length > 0 && isLoading;
+  const error = queryError instanceof Error ? queryError.message : '';
 
   const savedCars = favorites.map(id => cars.find(car => car._id === id)).filter((car): car is Car => Boolean(car));
   const missing = favorites.length - savedCars.length;
   const busy = loading || !ready;
 
   return <><SiteHeader/><main className="catalog-page">
-    <div className="container catalog-breadcrumb"><span>Home</span><span>/</span><strong>Favorites</strong></div>
+    <nav className="container catalog-breadcrumb" aria-label="Breadcrumb"><Link href="/">Home</Link><span aria-hidden="true">/</span><strong aria-current="page">Favorites</strong></nav>
     <div className="container favorites-page">
       <div className="favorites-head">
         <div>

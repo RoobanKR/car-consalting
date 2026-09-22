@@ -1,21 +1,19 @@
 'use client';
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ArrowRight, GitCompare, X } from 'lucide-react';
-import { api, Car } from '@/lib/api';
+import { Car } from '@/lib/api';
+import { useCarsByIds } from '@/lib/queries';
 import { useCompare } from '@/lib/compare';
 
 export default function CompareBar() {
+  const router = useRouter();
   const { compareIds, ready, remove, clear, max } = useCompare();
-  const [cars, setCars] = useState<Car[]>([]);
-  const [loaded, setLoaded] = useState(false);
 
-  useEffect(() => {
-    if (!ready) return;
-    if (compareIds.length === 0) { setCars([]); return; }
-    if (loaded) return;
-    api<Car[]>('/cars').then(list => setCars(list)).catch(() => {}).finally(() => setLoaded(true));
-  }, [ready, compareIds.length, loaded]);
+  // Clearing empties the bar and it disappears, which leaves you nowhere — send you
+  // back to the catalog so there is something to pick from.
+  function clearAndBrowse() { clear(); router.push('/cars'); }
+  const { data: cars = [] } = useCarsByIds(compareIds, ready);
 
   if (!ready || compareIds.length === 0) return null;
   const selected = compareIds.map(id => cars.find(car => car._id === id) || { _id: id, brand: 'Loading', model: '', year: 0, images: [] } as unknown as Car);
@@ -30,7 +28,7 @@ export default function CompareBar() {
         </div>)}
       </div>
       <div className="compare-bar-actions">
-        <button type="button" className="compare-bar-clear" onClick={clear}>Clear</button>
+        <button type="button" className="compare-bar-clear" onClick={clearAndBrowse}>Clear</button>
         <Link href="/compare" className="compare-bar-cta">{compareIds.length === 1 ? 'View selection' : 'Compare now'} <ArrowRight size={16}/></Link>
       </div>
     </div>
