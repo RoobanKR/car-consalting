@@ -1,0 +1,38 @@
+{
+  "name": "car-consulting",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "seed:cars": "tsx scripts/seedCars.ts",
+    "seed:extra": "tsx scripts/addExtraCars.ts",
+    "seed:users": "tsx scripts/seedUsers.ts",
+    "backfill:slugs": "tsx scripts/backfillSlugs.ts",
+    "photos:find": "tsx scripts/findIllustrativePhotos.ts",
+    "photos:upload": "tsx scripts/uploadIllustrativePhotos.ts",
+    "photos:finish": "tsx scripts/finishIllustrativePhotos.ts"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cloudinary": "^2.5.1",
+    "jsonwebtoken": "^9.0.2",
+    "lucide-react": "^0.468.0",
+    "mongoose": "^8.9.5",
+    "next": "^15.1.4",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.7",
+    "@types/node": "^22.10.5",
+    "@types/react": "^19.0.6",
+    "@types/react-dom": "^19.0.3",
+    "dotenv": "^16.4.7",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3"
+  }
+}
