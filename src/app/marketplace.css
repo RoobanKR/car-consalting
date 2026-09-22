@@ -487,3 +487,8 @@ body:has(.compare-bar) .back-to-top{bottom:110px}
   .compare-grid h3,.compare-header-car strong{font-size:12px}
   .compare-grid-wrap{overflow-x:visible}
 }
+
+/* Let the browser keep vertical scrolling while we handle horizontal swipes,
+   and stop the photo being dragged as an image on touch devices. */
+.market-car-image-swipe{touch-action:pan-y}
+.market-car-image-swipe img{-webkit-user-drag:none;user-select:none}

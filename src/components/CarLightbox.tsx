@@ -1,13 +1,13 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import type { Car } from '@/lib/api';
+import { useSwipe } from '@/lib/useSwipe';
 
 export default function CarLightbox({ images, name, startIndex = 0, onClose }: { images: Car['images']; name: string; startIndex?: number; onClose: () => void }) {
   const [index, setIndex] = useState(startIndex);
   const [mounted, setMounted] = useState(false);
-  const touchStartX = useRef(0);
   const photos = images || [];
   const total = photos.length;
   const current = photos[index];
@@ -27,10 +27,7 @@ export default function CarLightbox({ images, name, startIndex = 0, onClose }: {
   }, [total, onClose]);
 
   // Arrows are gone, so a swipe keeps the gallery usable on a phone.
-  function onTouchEnd(event: React.TouchEvent) {
-    const travelled = event.changedTouches[0].clientX - touchStartX.current;
-    if (Math.abs(travelled) > 45) setIndex(i => (i + (travelled < 0 ? 1 : -1) + total) % total);
-  }
+  const { handlers: swipeHandlers } = useSwipe(direction => setIndex(i => (i + direction + total) % total), 45);
 
   if (!mounted || !total) return null;
 
@@ -44,7 +41,7 @@ export default function CarLightbox({ images, name, startIndex = 0, onClose }: {
           <span>{index + 1} / {total} · {name}</span>
           <button type="button" onClick={onClose} aria-label="Close gallery"><X size={22}/></button>
         </div>
-        <div className="car-lightbox-stage" onClick={event => { if (event.target === event.currentTarget) onClose(); }} onTouchStart={event => { touchStartX.current = event.changedTouches[0].clientX; }} onTouchEnd={onTouchEnd}>
+        <div className="car-lightbox-stage" onClick={event => { if (event.target === event.currentTarget) onClose(); }} {...swipeHandlers}>
           <img src={current.url} alt={`${name} photo ${index + 1}`}/>
         </div>
         {total > 1 && <div className="car-lightbox-dots">

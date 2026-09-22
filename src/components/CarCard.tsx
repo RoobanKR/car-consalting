@@ -5,6 +5,7 @@ import { ArrowUpRight, Camera, Check, Gauge, GitCompare, Heart, MapPin } from 'l
 import { Car, carHref, money } from '@/lib/api';
 import { useFavorites } from '@/lib/favorites';
 import { useCompare } from '@/lib/compare';
+import { useSwipe } from '@/lib/useSwipe';
 import CarLightbox from './CarLightbox';
 
 export default function CarCard({ car }: { car: Car }) {
@@ -18,6 +19,11 @@ export default function CarCard({ car }: { car: Car }) {
   const href = carHref(car);
   const favorited = favReady && isFavorite(car._id);
   const compared = cmpReady && inCompare(car._id);
+  // Swiping the photo moves through the gallery; the dots stay as a tap target.
+  const { handlers: swipeHandlers, swiped } = useSwipe(direction => {
+    setPhotoIndex(index => (index + direction + images.length) % images.length);
+  });
+
   function handleCompareClick() {
     setCompareMessage('');
     const result = toggleCompare(car._id);
@@ -27,7 +33,7 @@ export default function CarCard({ car }: { car: Car }) {
     }
   }
   return <article className="market-car-card">
-    <div className="market-car-image">
+    <div className={images.length > 1 ? 'market-car-image market-car-image-swipe' : 'market-car-image'} {...(images.length > 1 ? swipeHandlers : {})} onClickCapture={event => { if (swiped.current) { swiped.current = false; event.preventDefault(); event.stopPropagation(); } }}>
       <Link href={href} className="market-car-image-link" aria-label={`View ${car.brand} ${car.model}`}>
         {photo?.url ? <img src={photo.url} alt={`${car.brand} ${car.model} photo ${photoIndex + 1}`} loading="lazy"/> : <div className="market-car-placeholder"><span><Gauge size={46}/></span><strong>{car.brand}</strong><small>Photos coming soon</small></div>}
       </Link>
