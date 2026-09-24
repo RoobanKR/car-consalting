@@ -6,6 +6,7 @@ import QueryProvider from '@/components/QueryProvider';
 import BackToTop from '@/components/BackToTop';
 import CompareBar from '@/components/CompareBar';
 import WhatsAppButton from '@/components/WhatsAppButton';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 export const metadata: Metadata = {
   title: 'KangaCars | Find the right car with confidence',
@@ -13,5 +14,5 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en"><body><QueryProvider>{children}<CompareBar/><WhatsAppButton/><BackToTop/></QueryProvider></body></html>;
+  return <html lang="en"><body><QueryProvider>{children}<CompareBar/><WhatsAppButton/><BackToTop/></QueryProvider><SpeedInsights/></body></html>;
 }
