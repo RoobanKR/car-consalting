@@ -1,6 +1,6 @@
 'use client';
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
-import { api, type Car } from './api';
+import { api, type Car, type Feedback } from './api';
 
 export const CARS_PER_PAGE = 15;
 
@@ -75,5 +75,19 @@ export function useCarsByIds(ids: string[], enabled = true) {
     queryKey: ['cars-by-ids', key],
     queryFn: () => api<Car[]>(`/cars/by-ids?ids=${encodeURIComponent(key)}`),
     enabled: enabled && ids.length > 0
+  });
+}
+
+export const FEEDBACK_PER_PAGE = 12;
+
+export type FeedbackPage = { items: Feedback[]; total: number; page: number; limit: number; hasMore: boolean };
+
+/** All published feedback, a page at a time, for the dedicated feedback page. */
+export function useFeedbackInfinite(limit = FEEDBACK_PER_PAGE) {
+  return useInfiniteQuery<FeedbackPage>({
+    queryKey: ['feedback', limit],
+    initialPageParam: 1,
+    queryFn: ({ pageParam }) => api<FeedbackPage>(`/feedback?page=${pageParam}&limit=${limit}`),
+    getNextPageParam: last => (last.hasMore ? last.page + 1 : undefined)
   });
 }

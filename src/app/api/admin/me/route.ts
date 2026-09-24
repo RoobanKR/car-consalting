@@ -11,5 +11,5 @@ export const GET = route(async request => {
     const account = await User.findById(session.userId);
     if (account) return NextResponse.json(publicUser(account));
   }
-  return NextResponse.json({ _id: 'env-admin', firstName: 'Carwise', lastName: 'Admin', email: session.email, phone: '', address: '', role: session.role });
+  return NextResponse.json({ _id: 'env-admin', firstName: 'KangaCars', lastName: 'Admin', email: session.email, phone: '', address: '', role: session.role });
 });

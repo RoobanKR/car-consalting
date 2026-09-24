@@ -279,3 +279,167 @@
 .admin-car-form label small{font-weight:400;color:#9baa9c;margin-left:6px}
 .row-actions button:disabled{opacity:.4;cursor:not-allowed}
 @media(max-width:650px){.user-address{display:none}.sidebar-role{margin:-38px 10px 24px}}
+.admin-stars{display:inline-flex;gap:2px;color:#d59b1f}
+.admin-stars svg:not(.filled){color:#d7ddd6}
+.rating-picker{display:flex;align-items:center;gap:4px;margin-top:8px}
+.rating-picker button{display:grid;place-items:center;width:34px;height:34px;border:0;background:none;color:#d7ddd6;border-radius:7px;transition:color .15s,background .15s}
+.rating-picker button.on{color:#d59b1f}
+.rating-picker button:hover{background:#f3f6f1}
+.rating-picker small{margin-left:7px;font-size:11px;font-weight:400;color:#87958a}
+.admin-toggle{display:flex!important;align-items:center;gap:9px;margin:16px 0 0!important;font-size:12px;font-weight:700;color:#405448;cursor:pointer}
+.admin-toggle input{width:17px;height:17px;margin:0;accent-color:#547d3c}
+
+.admin-feedback-photo{display:grid;place-items:center;flex:none;width:72px;height:58px;border:1px solid #e8e5f0;border-radius:7px;overflow:hidden;background:#f7f5fb}
+.admin-feedback-photo img,.admin-feedback-preview img{display:block;width:100%;height:100%;object-fit:contain}
+.admin-feedback-preview{background:#f7f5fb}
+.sale-seller-note{display:flex;align-items:center;gap:11px;margin-top:4px;padding:12px 14px;border:1px solid #e3ebdf;border-radius:8px;background:#fafcf8;color:#4f6354}
+.sale-seller-note svg{flex:none;color:#5b8a45}
+.sale-seller-note small{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:#778c78}
+.sale-seller-note strong{font-size:12px;overflow-wrap:anywhere}
+
+/* ================= analytics & reports ================= */
+.report-filters{display:grid;gap:14px;margin-bottom:20px}
+.report-period{display:flex;flex-wrap:wrap;gap:6px}
+.report-period button{border:1px solid #e0e9df;background:#fff;border-radius:7px;padding:9px 13px;color:#53685a;font-size:11px;font-weight:700;min-height:38px}
+.report-period button.selected{background:#eaf5dc;border-color:#c3dcad;color:#294c2c}
+.report-filter-row{display:flex;flex-wrap:wrap;align-items:flex-end;gap:12px}
+.report-filter-row label{display:grid;gap:6px;margin:0;font-size:11px;font-weight:700;color:#435b4c}
+.report-filter-row input,.report-filter-row select{border:1px solid #dce6df;border-radius:7px;padding:9px 10px;font-size:12px;background:#fff;color:var(--ink);min-height:38px}
+.report-reset{display:inline-flex;align-items:center;gap:6px;border:1px solid #e0e9df;background:#fff;border-radius:7px;padding:9px 12px;color:#6b7d70;font-size:11px;font-weight:700;min-height:38px}
+.report-range{margin:0;font-size:11px;color:#7d8d81}
+.report-stats{grid-template-columns:repeat(4,1fr)}
+
+.report-quick{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.report-quick-card{background:#fff;border:1px solid var(--line);border-radius:8px;padding:15px 16px;display:grid;gap:4px}
+.report-quick-card small{font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:#7d8d81;font-weight:800}
+.report-quick-card strong{font:800 19px Manrope,sans-serif;color:var(--ink)}
+.report-quick-card span{font-size:11px;color:#77887c}
+
+.report-chart{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;align-items:end;gap:6px;height:190px;padding-top:6px}
+.report-bar{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:5px;min-width:0}
+.report-bar-value{font-size:10px;font-weight:800;color:#4b6b3f;height:13px}
+.report-bar-fill{display:block;width:min(100%,30px);border-radius:5px 5px 2px 2px;background:linear-gradient(180deg,#bfe57a,#7fae4d);transition:height .25s}
+.report-bar small{font-size:9px;color:#8b988d;font-weight:700}
+.report-chart-total{font-size:11px;color:#7d8d81;font-weight:700}
+.admin-report-table td{vertical-align:middle}
+.admin-report-table .customer-cell a{color:#6c856e;font-size:11px}
+
+@media(max-width:980px){
+  .report-stats{grid-template-columns:repeat(2,1fr)}
+  .report-quick{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:700px){
+  .report-filters{padding:16px}
+  .report-period{display:grid;grid-template-columns:repeat(3,1fr)}
+  .report-period button{padding:9px 6px;font-size:10px}
+  .report-filter-row{display:grid;grid-template-columns:1fr 1fr}
+  .report-filter-row label:last-of-type,.report-reset{grid-column:1/-1}
+  .report-filter-row select{width:100%}
+  .report-stats{gap:10px}
+  .report-stats>div{padding:16px;min-height:0}
+  .report-stats strong{font-size:23px;margin-top:8px}
+  .report-stats svg{top:14px;right:14px;width:30px;height:30px;padding:6px}
+  .report-quick{gap:8px}
+  .report-quick-card{padding:12px}
+  .report-quick-card strong{font-size:16px}
+  .report-chart{height:150px;gap:3px}
+  .report-bar-fill{width:min(100%,20px)}
+  .report-bar small{font-size:8px}
+}
+
+/* feedback as cards rather than a table row per review */
+.admin-feedback-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.admin-feedback-card{display:flex;flex-direction:column;gap:10px;border:1px solid var(--line);border-radius:10px;padding:17px 16px;background:#fff;transition:border-color .15s,box-shadow .15s}
+.admin-feedback-card:hover{border-color:#cfdcc9;box-shadow:0 6px 18px #17362112}
+.admin-feedback-card.muted{background:#fbfcfa;border-style:dashed}
+.admin-feedback-card.muted .admin-feedback-message{color:#8b988d}
+.admin-feedback-head{display:flex;align-items:center;gap:11px}
+.admin-feedback-who{display:grid;gap:2px;min-width:0;margin-right:auto}
+.admin-feedback-who strong{font-size:13px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.admin-feedback-who small{font-size:10px;color:#8b988d}
+.admin-feedback-message{margin:0;font-size:12px;line-height:1.7;color:#55685b;overflow-wrap:anywhere}
+.admin-feedback-actions{display:flex;gap:8px;margin-top:auto;padding-top:12px;border-top:1px solid #eef1ed}
+.admin-feedback-actions button{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:36px;padding:0 13px;border:1px solid #d5d9ef;border-radius:7px;background:#f6f5ff;color:#4834a3;font-size:11px;font-weight:800}
+.admin-feedback-actions button:hover{background:#efedff}
+.admin-feedback-delete{border-color:#efdada!important;background:#fdf5f5!important;color:#b3484a!important;margin-left:auto}
+.admin-feedback-delete:hover{background:#fbeaea!important}
+@media(max-width:700px){
+  .admin-feedback-grid{grid-template-columns:1fr;gap:10px}
+  .admin-feedback-actions button{flex:1}
+}
+/* inside a card the photo sits where the initial avatar would, so cards stay even */
+.admin-feedback-head .admin-feedback-photo{width:38px;height:38px;border-radius:50%}
+.admin-feedback-head .admin-feedback-photo img{object-fit:cover}
+.admin-sidebar .brand{margin-bottom:38px}
+.admin-sidebar .brand-logo img{height:34px}
+@media(max-width:700px){.admin-sidebar .brand-logo{display:none}}
+
+/* ===================================================================
+   Admin theme: blue and white, matching the public site.
+   These override the original green palette that lives in globals.css,
+   which is why they sit at the end of the last stylesheet loaded.
+   =================================================================== */
+:root{--adm-blue:#4736d4;--adm-blue-dark:#3826bd;--adm-blue-soft:#eeebff;--adm-navy:#1e2340}
+
+.admin-shell{background:#f7f8fc}
+
+/* sidebar */
+.admin-sidebar{background:var(--adm-blue);color:#e3e0ff}
+.admin-sidebar .brand{color:#fff}
+.admin-sidebar .brand-logo,.admin-login-side .brand-logo{background:none;padding:0}
+.admin-sidebar .brand-logo img,.admin-login-side .brand-logo img{filter:brightness(0) invert(1)}
+.sidebar-label{color:#b9b2f5}
+.admin-sidebar nav button,.sidebar-bottom button,.sidebar-bottom a{color:#d5d0ff}
+.admin-sidebar nav button:hover,.admin-sidebar nav button.active{background:#5a4ade;color:#fff}
+.admin-sidebar nav button span{background:#6d5fe4;color:#fff}
+.sidebar-bottom{border-top:1px solid #6254e0}
+.sidebar-role{background:#fff;color:var(--adm-blue)}
+
+/* sign-in screen */
+.admin-login-side{background:radial-gradient(circle at 70% 55%,#6152e2,#4736d4 55%,#2e1fa6)}
+.admin-login-side p{color:#cfc9ff}
+.admin-login-side small{color:#b3aaf0}
+.admin-icon{background:var(--adm-blue-soft);color:var(--adm-blue)}
+
+/* primary actions */
+.admin-shell .button-primary,.admin-login .button-primary{background:var(--adm-blue);color:#fff}
+.admin-shell .button-primary:hover,.admin-login .button-primary:hover{background:var(--adm-blue-dark)}
+.admin-shell .button-secondary{background:#eef0fa;color:var(--adm-navy)}
+
+/* headings, avatars and small accents */
+.admin-kicker{color:var(--adm-blue)}
+.accent-dot{color:var(--adm-blue)}
+.admin-avatar{background:var(--adm-blue-soft);color:var(--adm-blue)}
+.admin-stats svg{color:var(--adm-blue);background:var(--adm-blue-soft)}
+.panel-title button{color:var(--adm-blue)}
+.row-actions button{color:var(--adm-blue)}
+.initial,.mini-car{background:var(--adm-blue-soft);color:var(--adm-blue)}
+.user-avatar{background:var(--adm-blue-soft);color:var(--adm-blue)}
+.admin-search{color:#8d92ad}
+.upload-tile{border-color:#c6c1f0;color:var(--adm-blue);background:#faf9ff}
+
+/* status pills */
+.status-new,.status-active{background:#e6f7ed;color:#1f8049}
+.status-contacted{background:var(--adm-blue-soft);color:var(--adm-blue)}
+
+/* form controls */
+.admin-toggle input,.admin-car-form .feature-picker-option input{accent-color:var(--adm-blue)}
+.admin-status-filters button.selected{background:var(--adm-blue-soft);border-color:#c6c1f0;color:var(--adm-blue)}
+.feature-chips>span{background:var(--adm-blue-soft);color:var(--adm-blue)}
+.feature-other-button{background:var(--adm-blue-soft);color:var(--adm-blue)}
+.feature-other-entry button{background:var(--adm-blue);color:#fff}
+.sale-seller-note{border-color:#ddd9f6;background:#faf9ff;color:#4a4f70}
+.sale-seller-note svg{color:var(--adm-blue)}
+
+/* hero media + feedback + reports */
+.hero-live-tag{background:var(--adm-blue-soft);color:var(--adm-blue)}
+.hero-media-card.active{border-color:#a79df0;box-shadow:0 0 0 2px #ddd8fb}
+.hero-media-live{background:var(--adm-blue)}
+.hero-media-actions>button:first-child{border-color:#d5d9ef;background:#f6f5ff;color:var(--adm-blue)}
+.hero-media-current{color:var(--adm-blue)}
+.role-note svg{color:var(--adm-blue)}
+.report-period button.selected{background:var(--adm-blue-soft);border-color:#c6c1f0;color:var(--adm-blue)}
+.report-bar-fill{background:linear-gradient(180deg,#8b7df0,var(--adm-blue))}
+.report-bar-value{color:var(--adm-blue)}
+.admin-feedback-actions button{border-color:#d5d9ef;background:#f6f5ff;color:var(--adm-blue)}
+.admin-login h1 em{color:#cfc9ff}

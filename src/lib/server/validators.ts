@@ -7,10 +7,12 @@ export const saleInput = z.object({
   soldPrice: z.coerce.number().positive().max(1000000000),
   soldAt: z.coerce.date(),
   buyerName: cleanText.min(2).max(100),
-  buyerEmail: z.string().trim().email().max(254),
+  // Optional: kept so older sales that captured it still validate.
+  buyerEmail: z.string().trim().email().max(254).or(z.literal('')).optional().default(''),
   buyerPhone: cleanText.min(7).max(25),
-  salespersonName: cleanText.min(2).max(100),
-  salespersonEmail: z.string().trim().email().max(254)
+  // The sell route overwrites these from the signed-in account.
+  salespersonName: cleanText.max(100).optional().default(''),
+  salespersonEmail: z.string().trim().email().max(254).or(z.literal('')).optional().default('')
 });
 
 export const carInput = z.object({
@@ -32,10 +34,10 @@ export const carInput = z.object({
   status: z.enum(['active', 'sold', 'hidden']).default('active'),
   sale: saleInput.optional(),
   postedBy: z.object({
-    name: cleanText.max(100).default('Carwise Admin'),
+    name: cleanText.max(100).default('KangaCars Admin'),
     email: z.string().trim().email().max(254).or(z.literal('')).default(''),
     phone: cleanText.max(25).default('')
-  }).default({ name: 'Carwise Admin', email: '', phone: '' })
+  }).default({ name: 'KangaCars Admin', email: '', phone: '' })
 }).superRefine((car, context) => {
   if (car.status === 'sold' && !car.sale) context.addIssue({ code: 'custom', path: ['sale'], message: 'Sale details are required for sold cars.' });
 });
@@ -65,3 +67,14 @@ export const userInput = z.object({
 
 /** Same as userInput but the password is only changed when one is supplied. */
 export const userUpdateInput = userInput.extend({ password: password.optional().or(z.literal('')) });
+
+export const feedbackInput = z.object({
+  name: cleanText.min(2, 'Enter a name.').max(80),
+  message: cleanText.min(4, 'Write a few words.').max(1500),
+  rating: z.coerce.number().int().min(1, 'Pick 1 to 5 stars.').max(5),
+  image: z.object({
+    url: z.string().url().or(z.literal('')).default(''),
+    publicId: z.string().max(200).default('')
+  }).default({ url: '', publicId: '' }),
+  published: z.boolean().default(true)
+});

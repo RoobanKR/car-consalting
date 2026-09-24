@@ -31,7 +31,7 @@ export default function CarGallery({ images, name, carId }: { images: Car['image
 
   return <div className="car-gallery">
     <div className="main-car-image">
-      {current?.url ? <img src={current.url} alt={`${name} photo ${selected + 1}`}/> : <div className="car-placeholder"><span>CARWISE SELECT</span><strong>{name}</strong></div>}
+      {current?.url ? <img src={current.url} alt={`${name} photo ${selected + 1}`}/> : <div className="car-placeholder"><span>KANGACARS SELECT</span><strong>{name}</strong></div>}
       {photos.length > 0 && <button type="button" className="market-photo-badge" onClick={() => setLightboxOpen(true)} aria-label={`Open ${photos.length}-photo gallery`}>
         <Camera size={13} strokeWidth={2.4}/> {photos.length}
       </button>}

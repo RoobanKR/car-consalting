@@ -5,6 +5,7 @@ import { CarFront, Check, ChevronDown, Heart, Menu, MessageCircle, X } from 'luc
 import { useEffect, useRef, useState } from 'react';
 import { api } from '@/lib/api';
 import { useFavorites } from '@/lib/favorites';
+import { generalMessage, whatsappLink } from '@/lib/whatsapp';
 
 export default function SiteHeader() {
   const pathname = usePathname() || '/';
@@ -50,9 +51,9 @@ export default function SiteHeader() {
   }
 
   return <header className="market-header">
-    <div className="market-topline"><div className="container"><span>Find a car that fits your life</span><Link href="/contact">Questions? Get in touch <MessageCircle size={14}/></Link></div></div>
+    <div className="market-topline"><div className="container"><span>Find a car that fits your life</span><a href={whatsappLink(generalMessage)} target="_blank" rel="noopener noreferrer">Questions? Get in touch <MessageCircle size={14}/></a></div></div>
     <div className="container market-header-main">
-      <Link href="/" className="market-logo" aria-label="Carwise home"><span className="market-logo-icon"><CarFront size={22} strokeWidth={2.6}/></span><span>carwise<span>.</span></span></Link>
+      <Link href="/" className="market-logo" aria-label="KangaCars home"><img src="/kangacars-logo.png" alt="KangaCars" width={620} height={208}/></Link>
       <div ref={modelRef} className={modelOpen ? 'market-location-wrap open' : 'market-location-wrap'}>
         <button type="button" className="market-location" aria-haspopup="listbox" aria-expanded={modelOpen} onClick={() => setModelOpen(!modelOpen)}>
           <CarFront size={17}/>

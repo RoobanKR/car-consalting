@@ -34,6 +34,12 @@ export type User = {
   phone: string; address?: string; role: 'admin' | 'superadmin'; createdAt?: string;
 };
 
+export type Feedback = {
+  _id: string; name: string; message: string; rating: number;
+  image?: { url?: string; publicId?: string };
+  published?: boolean; createdAt?: string;
+};
+
 export async function api<T>(path: string, options: RequestInit = {}, token?: string): Promise<T> {
   const headers = new Headers(options.headers);
   if (!(options.body instanceof FormData)) headers.set('Content-Type', 'application/json');

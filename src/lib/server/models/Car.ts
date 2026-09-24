@@ -14,14 +14,15 @@ const saleSchema = new mongoose.Schema({
   soldPrice: { type: Number, required: true },
   soldAt: { type: Date, required: true },
   buyerName: { type: String, required: true, trim: true },
-  buyerEmail: { type: String, required: true, trim: true },
+  buyerEmail: { type: String, trim: true, default: '' },
   buyerPhone: { type: String, required: true, trim: true },
-  salespersonName: { type: String, required: true, trim: true },
-  salespersonEmail: { type: String, required: true, trim: true }
+  // Filled from the signed-in account by the sell route, never from the request body.
+  salespersonName: { type: String, trim: true, default: '' },
+  salespersonEmail: { type: String, trim: true, default: '' }
 }, { _id: false });
 
 const postedBySchema = new mongoose.Schema({
-  name: { type: String, trim: true, default: 'Carwise Admin' },
+  name: { type: String, trim: true, default: 'KangaCars Admin' },
   email: { type: String, trim: true, lowercase: true, default: '' },
   phone: { type: String, trim: true, default: '' }
 }, { _id: false });

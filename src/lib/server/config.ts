@@ -25,6 +25,10 @@ export const config = {
   jwtSecret: fromEnv('JWT_SECRET', '8fa48ce2c26f4639b32bd5054b3677da'),
   adminEmail: fromEnv('ADMIN_EMAIL', 'roobankr3@gmail.com'),
   adminPasswordHash: fromEnv('ADMIN_PASSWORD_HASH', '$2a$12$0aF9FL/0HryZecZ36DnWpuu.bWNGbz9.cBxkOIpnDus3lrMcxUXR6'),
+  /** Home page counters. The vehicle and customer numbers are counted from the
+   *  database; this one has no records behind it, so it is kept here. Set it to 0
+   *  and the home page shows the number of cities covered instead. */
+  partnerDealers: Number(process.env.PARTNER_DEALERS || 15),
   cloudinary: {
     cloudName: fromEnv('CLOUDINARY_CLOUD_NAME', 'dwwxwyhwg'),
     apiKey: fromEnv('CLOUDINARY_API_KEY', '375146684443485'),

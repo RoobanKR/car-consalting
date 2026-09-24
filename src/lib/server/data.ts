@@ -2,6 +2,8 @@ import mongoose from 'mongoose';
 import { connectDB } from './db';
 import { Car } from './models/Car';
 import { HeroMedia } from './models/HeroMedia';
+import { Feedback } from './models/Feedback';
+import { config } from './config';
 
 /** Mongo documents carry ObjectIds and Dates; server components may only hand plain
  *  JSON to client components, so every read goes through this. It also keeps the
@@ -213,4 +215,47 @@ export async function getActiveHeroMedia() {
     _id: media._id, type: media.type, url: media.url, posterUrl: media.posterUrl || '',
     label: media.label || '', width: media.width, height: media.height, duration: media.duration
   });
+}
+
+export type FeedbackPage = { items: unknown[]; total: number; page: number; limit: number; hasMore: boolean };
+
+/** Published customer feedback, newest first. The home page takes the first few;
+ *  the dedicated feedback page walks through all of them. */
+export async function listFeedback({ page = 1, limit = 5 }: { page?: number; limit?: number } = {}): Promise<FeedbackPage> {
+  await connectDB();
+  const safeLimit = Math.min(Math.max(Number(limit) || 5, 1), 50);
+  const safePage = Math.max(Number(page) || 1, 1);
+  const filter = { published: true };
+  const [items, total] = await Promise.all([
+    Feedback.find(filter).sort({ createdAt: -1 }).skip((safePage - 1) * safeLimit).limit(safeLimit).lean(),
+    Feedback.countDocuments(filter)
+  ]);
+  return { items: serialize(items), total, page: safePage, limit: safeLimit, hasMore: safePage * safeLimit < total };
+}
+
+export type SiteStats = {
+  vehiclesInStock: number;
+  happyCustomers: number;
+  vehiclesOnSale: number;
+  partnerDealers: number;
+  citiesCovered: number;
+};
+
+/** Counters for the home page band. Everything except partnerDealers is counted
+ *  from real records, so the numbers move as the inventory does. */
+export async function getSiteStats(): Promise<SiteStats> {
+  await connectDB();
+  const [vehiclesInStock, vehiclesOnSale, happyCustomers, cities] = await Promise.all([
+    Car.countDocuments({}),
+    Car.countDocuments(publicMatch),
+    Car.countDocuments({ status: 'sold' }),
+    Car.distinct('location', publicMatch)
+  ]);
+  return {
+    vehiclesInStock,
+    vehiclesOnSale,
+    happyCustomers,
+    partnerDealers: config.partnerDealers,
+    citiesCovered: cities.filter(Boolean).length
+  };
 }

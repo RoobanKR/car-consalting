@@ -30,7 +30,7 @@ export const POST = route(async request => {
   if (builtInConfigured && email === config.adminEmail.toLowerCase() && await bcrypt.compare(password, config.adminPasswordHash)) {
     return NextResponse.json({
       token: jwt.sign({ role: 'superadmin', email }, config.jwtSecret, { expiresIn: '8h' }),
-      user: { _id: 'env-admin', firstName: 'Carwise', lastName: 'Admin', email, phone: '', address: '', role: 'superadmin' as const }
+      user: { _id: 'env-admin', firstName: 'KangaCars', lastName: 'Admin', email, phone: '', address: '', role: 'superadmin' as const }
     });
   }
 

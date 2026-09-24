@@ -5,12 +5,13 @@ import './admin.css';
 import QueryProvider from '@/components/QueryProvider';
 import BackToTop from '@/components/BackToTop';
 import CompareBar from '@/components/CompareBar';
+import WhatsAppButton from '@/components/WhatsAppButton';
 
 export const metadata: Metadata = {
-  title: 'Carwise | Find the right car with confidence',
+  title: 'KangaCars | Find the right car with confidence',
   description: 'Explore quality cars and send a simple enquiry to our team.'
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en"><body><QueryProvider>{children}<CompareBar/><BackToTop/></QueryProvider></body></html>;
+  return <html lang="en"><body><QueryProvider>{children}<CompareBar/><WhatsAppButton/><BackToTop/></QueryProvider></body></html>;
 }

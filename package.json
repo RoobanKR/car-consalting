@@ -9,6 +9,7 @@
     "seed:cars": "tsx scripts/seedCars.ts",
     "seed:extra": "tsx scripts/addExtraCars.ts",
     "seed:users": "tsx scripts/seedUsers.ts",
+    "seed:feedback": "tsx scripts/seedFeedback.ts",
     "backfill:slugs": "tsx scripts/backfillSlugs.ts",
     "photos:find": "tsx scripts/findIllustrativePhotos.ts",
     "photos:upload": "tsx scripts/uploadIllustrativePhotos.ts",

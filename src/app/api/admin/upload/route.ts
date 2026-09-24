@@ -11,6 +11,10 @@ export const POST = adminRoute(async request => {
     message: 'Choose a JPEG, PNG or WebP image under 5 MB.'
   });
   if (!getCloudinary()) throw new ApiError(503, 'Cloudinary is not configured.');
-  const result = await uploadBuffer(file.buffer, { folder: 'car-consulting/cars', resource_type: 'image' });
+  // Callers may pick a destination, but only from a fixed list so a crafted request
+  // cannot write anywhere it likes in the Cloudinary account.
+  const folders: Record<string, string> = { cars: 'car-consulting/cars', feedback: 'car-consulting/feedback' };
+  const folder = folders[file.label] || folders.cars;
+  const result = await uploadBuffer(file.buffer, { folder, resource_type: 'image' });
   return NextResponse.json({ url: result.secure_url, publicId: result.public_id });
 });
