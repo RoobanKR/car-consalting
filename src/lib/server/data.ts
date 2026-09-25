@@ -259,3 +259,15 @@ export async function getSiteStats(): Promise<SiteStats> {
     citiesCovered: cities.filter(Boolean).length
   };
 }
+
+/** Every public car's address and last change, for sitemap.xml. */
+export async function listSitemapCars() {
+  await connectDB();
+  const cars = await Car.find(publicMatch).select('slug updatedAt images.url').sort({ updatedAt: -1 }).limit(5000).lean();
+  return cars.map(car => ({
+    _id: String(car._id),
+    slug: car.slug || undefined,
+    updatedAt: car.updatedAt ? new Date(car.updatedAt) : new Date(),
+    images: (car.images || []).map(image => image.url)
+  }));
+}
