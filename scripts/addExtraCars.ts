@@ -18,7 +18,7 @@ const inventory = [
 ];
 
 async function main() {
-  if (!config.mongoUri) throw new Error('No MongoDB connection string in src/lib/server/config.ts');
+  if (!config.mongoUri) throw new Error('MONGODB_URI is not set. Add it to .env.local.');
   const databaseName = new URL(config.mongoUri).pathname.slice(1);
   if (databaseName !== 'car-consulting') throw new Error(`Refusing to seed ${databaseName || 'an unnamed database'}; expected car-consulting.`);
   await mongoose.connect(config.mongoUri);

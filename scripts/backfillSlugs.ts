@@ -5,7 +5,7 @@ import { Car } from '@/lib/server/models/Car';
 import { buildCarSlug, uniqueCarSlug } from '@/lib/server/slug';
 
 async function main() {
-  if (!config.mongoUri) throw new Error('No MongoDB connection string in src/lib/server/config.ts');
+  if (!config.mongoUri) throw new Error('MONGODB_URI is not set. Add it to .env.local.');
   await mongoose.connect(config.mongoUri);
   await Car.init();
   const cars = await Car.find().sort({ createdAt: 1 });

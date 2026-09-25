@@ -32,7 +32,7 @@ export function route<C = unknown>(handler: Handler<C>): Handler<C> {
     try {
       // A misconfigured deployment is by far the most common cause of a 500 here,
       // so say which piece is missing instead of returning a generic error.
-      if (!config.mongoUri) throw new ApiError(503, 'Database is not configured: no connection string in config.ts or MONGODB_URI.');
+      if (!config.mongoUri) throw new ApiError(503, 'Database is not configured: set MONGODB_URI in .env.local (local) or in Vercel > Settings > Environment Variables, then redeploy.');
       await connectDB();
       return await handler(request, context);
     } catch (error) {
