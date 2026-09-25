@@ -11,11 +11,14 @@
     "seed:users": "tsx scripts/seedUsers.ts",
     "seed:feedback": "tsx scripts/seedFeedback.ts",
     "backfill:slugs": "tsx scripts/backfillSlugs.ts",
+    "fix:drive-urls": "tsx scripts/fixDriveUrls.ts",
+    "drive:auth": "tsx scripts/driveAuth.ts",
     "photos:find": "tsx scripts/findIllustrativePhotos.ts",
     "photos:upload": "tsx scripts/uploadIllustrativePhotos.ts",
     "photos:finish": "tsx scripts/finishIllustrativePhotos.ts"
   },
   "dependencies": {
+    "@googleapis/drive": "^26.0.1",
     "@tanstack/react-query": "^5.103.2",
     "@vercel/speed-insights": "^2.0.0",
     "bcryptjs": "^2.4.3",

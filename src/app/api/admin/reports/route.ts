@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { adminRoute } from '@/lib/server/http';
 import { Car } from '@/lib/server/models/Car';
+import { Enquiry } from '@/lib/server/models/Enquiry';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,6 +20,10 @@ const soldMatch = (from: Date, to: Date, salesperson?: string) => ({
   'sale.soldAt': { $gte: from, $lte: to },
   ...(salesperson ? { 'sale.salespersonEmail': salesperson } : {})
 });
+
+/** Enquiries have no salesperson on them, so unlike sales they are only ever
+ *  narrowed by date. The UI says as much when a person filter is active. */
+const asked = (from: Date, to: Date) => ({ createdAt: { $gte: from, $lte: to } });
 
 async function summarise(from: Date, to: Date, salesperson?: string) {
   const [row] = await Car.aggregate([
@@ -52,12 +57,15 @@ export const GET = adminRoute(async request => {
   const from = parsed.from || presetFrom;
   const to = parsed.to || presetTo;
 
-  // Which year the month-by-month breakdown covers.
-  const chartYear = from.getFullYear();
+  // Which year the month-by-month breakdown covers. This takes the END of the
+  // range: "All time" starts in 2000, and charting that year showed twelve empty
+  // months next to a non-zero total.
+  const chartYear = to.getFullYear();
   const chartStart = new Date(chartYear, 0, 1);
   const chartEnd = new Date(chartYear, 11, 31, 23, 59, 59, 999);
 
-  const [selected, week, month, year, allTime, byMonth, bySalesperson, buyers, people, activeCars, totalCars] = await Promise.all([
+  const [selected, week, month, year, allTime, byMonth, bySalesperson, buyers, people, activeCars, totalCars,
+    askedByStatus, askedWeek, askedMonth, askedYear, askedAll, askedByMonth, askedTopCars, askedRecent] = await Promise.all([
     summarise(from, to, salesperson),
     summarise(presets.week[0], presets.week[1], salesperson),
     summarise(presets.month[0], presets.month[1], salesperson),
@@ -91,14 +99,75 @@ export const GET = adminRoute(async request => {
       { $sort: { name: 1 } }
     ]),
     Car.countDocuments({ status: 'active' }),
-    Car.countDocuments({})
+    Car.countDocuments({}),
+
+    // --- enquiries, over the same range ---
+    Enquiry.aggregate([{ $match: asked(from, to) }, { $group: { _id: '$status', count: { $sum: 1 } } }]),
+    Enquiry.countDocuments(asked(presets.week[0], presets.week[1])),
+    Enquiry.countDocuments(asked(presets.month[0], presets.month[1])),
+    Enquiry.countDocuments(asked(presets.year[0], presets.year[1])),
+    Enquiry.countDocuments(asked(presets.all[0], presets.all[1])),
+    Enquiry.aggregate([
+      { $match: asked(chartStart, chartEnd) },
+      { $group: { _id: { $month: '$createdAt' }, count: { $sum: 1 } } },
+      { $sort: { _id: 1 } }
+    ]),
+    // Which cars people are actually asking about.
+    Enquiry.aggregate([
+      { $match: asked(from, to) },
+      { $group: { _id: '$carId', count: { $sum: 1 }, lastAt: { $max: '$createdAt' } } },
+      { $sort: { count: -1, lastAt: -1 } },
+      { $limit: 8 },
+      { $lookup: { from: 'cars', localField: '_id', foreignField: '_id', as: 'car' } },
+      { $unwind: { path: '$car', preserveNullAndEmptyArrays: true } }
+    ]),
+    Enquiry.find(asked(from, to))
+      .populate('carId', 'brand model year slug')
+      .sort({ createdAt: -1 })
+      .limit(200)
+      .lean()
   ]);
 
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+  const statusCount = (name: string) => askedByStatus.find(entry => entry._id === name)?.count || 0;
+  const askedTotal = askedByStatus.reduce((sum, entry) => sum + entry.count, 0);
+  const askedMonthly = monthNames.map((label, index) => ({
+    month: index + 1, label, count: askedByMonth.find(entry => entry._id === index + 1)?.count || 0
+  }));
+  type PopulatedCar = { brand?: string; model?: string; year?: number; slug?: string } | null;
   const monthly = monthNames.map((label, index) => {
     const found = byMonth.find(entry => entry._id === index + 1);
     return { month: index + 1, label, carsSold: found?.carsSold || 0, revenue: found?.revenue || 0 };
   });
+
+  const enquiries = {
+    selected: { total: askedTotal, new: statusCount('new'), contacted: statusCount('contacted'), closed: statusCount('closed') },
+    quick: { week: askedWeek, month: askedMonth, year: askedYear, allTime: askedAll },
+    monthly: askedMonthly,
+    topCars: askedTopCars.map(entry => ({
+      carId: String(entry._id),
+      car: entry.car ? `${entry.car.year} ${entry.car.brand} ${entry.car.model}` : 'Car removed',
+      slug: entry.car?.slug || '',
+      count: entry.count as number,
+      lastAt: entry.lastAt
+    })),
+    recent: askedRecent.map(entry => {
+      const car = entry.carId as PopulatedCar;
+      return {
+        _id: String(entry._id),
+        name: entry.name,
+        email: entry.email,
+        phone: entry.phone,
+        city: entry.city || '',
+        message: entry.message || '',
+        status: entry.status,
+        car: car?.brand ? `${car.year} ${car.brand} ${car.model}` : 'Car removed',
+        slug: car?.slug || '',
+        createdAt: entry.createdAt
+      };
+    })
+  };
 
   return NextResponse.json({
     range: { from: from.toISOString(), to: to.toISOString(), period, salesperson: salesperson || '', chartYear },
@@ -115,6 +184,7 @@ export const GET = adminRoute(async request => {
       lastSale: entry.lastSale
     })),
     people: people.map(entry => ({ email: entry._id as string, name: (entry.name as string) || (entry._id as string) })),
+    enquiries,
     buyers: buyers.map(car => ({
       carId: String(car._id),
       car: `${car.year} ${car.brand} ${car.model}`,

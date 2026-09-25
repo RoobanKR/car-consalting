@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { ApiError, adminRoute, readUpload } from '@/lib/server/http';
-import { getCloudinary, uploadBuffer } from '@/lib/server/cloudinary';
+import { storageReady, storeFile } from '@/lib/server/storage';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,11 +10,10 @@ export const POST = adminRoute(async request => {
     mimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
     message: 'Choose a JPEG, PNG or WebP image under 5 MB.'
   });
-  if (!getCloudinary()) throw new ApiError(503, 'Cloudinary is not configured.');
+  if (!storageReady()) throw new ApiError(503, 'No media storage is configured.');
   // Callers may pick a destination, but only from a fixed list so a crafted request
-  // cannot write anywhere it likes in the Cloudinary account.
-  const folders: Record<string, string> = { cars: 'car-consulting/cars', feedback: 'car-consulting/feedback' };
-  const folder = folders[file.label] || folders.cars;
-  const result = await uploadBuffer(file.buffer, { folder, resource_type: 'image' });
-  return NextResponse.json({ url: result.secure_url, publicId: result.public_id });
+  // cannot write anywhere it likes in the storage account.
+  const folder = ['cars', 'feedback'].includes(file.label) ? file.label : 'cars';
+  const result = await storeFile(file.buffer, { folder, filename: file.filename, mimeType: file.mimetype });
+  return NextResponse.json({ url: result.url, publicId: result.publicId });
 });

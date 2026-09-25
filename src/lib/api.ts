@@ -32,6 +32,8 @@ export type Enquiry = {
 export type User = {
   _id: string; firstName: string; lastName: string; email: string;
   phone: string; address?: string; role: 'admin' | 'superadmin'; createdAt?: string;
+  /** Which media backend uploads currently go to. Only sent by /admin/me. */
+  storage?: 'cloudinary' | 'drive';
 };
 
 export type Feedback = {

@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import { NextResponse } from 'next/server';
 import { adminRoute, notFound, parseBody, readJson } from '@/lib/server/http';
 import { feedbackInput } from '@/lib/server/validators';
-import { getCloudinary } from '@/lib/server/cloudinary';
+import { removeFile } from '@/lib/server/storage';
 import { Feedback } from '@/lib/server/models/Feedback';
 
 export const dynamic = 'force-dynamic';
@@ -23,10 +23,7 @@ export const DELETE = adminRoute<Context>(async (_request, { params }) => {
   if (!mongoose.isValidObjectId(id)) throw notFound('Feedback');
   const entry = await Feedback.findById(id);
   if (!entry) throw notFound('Feedback');
-  const cloudinary = getCloudinary();
-  if (cloudinary && entry.image?.publicId) {
-    await cloudinary.uploader.destroy(entry.image.publicId).catch((error: Error) => console.error('Cloudinary destroy failed:', error.message));
-  }
+  await removeFile(entry.image?.publicId);
   await entry.deleteOne();
   return NextResponse.json({ ok: true });
 });

@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import { NextResponse } from 'next/server';
 import { adminRoute, notFound } from '@/lib/server/http';
-import { getCloudinary } from '@/lib/server/cloudinary';
+import { removeFile } from '@/lib/server/storage';
 import { HeroMedia } from '@/lib/server/models/HeroMedia';
 
 export const dynamic = 'force-dynamic';
@@ -13,11 +13,7 @@ export const DELETE = adminRoute<Context>(async (_request, { params }) => {
   if (!mongoose.isValidObjectId(id)) throw notFound('Media');
   const media = await HeroMedia.findById(id);
   if (!media) throw notFound('Media');
-  const cloudinary = getCloudinary();
-  if (cloudinary && media.publicId) {
-    await cloudinary.uploader.destroy(media.publicId, { resource_type: media.type === 'video' ? 'video' : 'image' })
-      .catch((error: Error) => console.error('Cloudinary destroy failed:', error.message));
-  }
+  await removeFile(media.publicId, media.type === 'video' ? 'video' : 'image');
   await media.deleteOne();
   return NextResponse.json({ ok: true });
 });

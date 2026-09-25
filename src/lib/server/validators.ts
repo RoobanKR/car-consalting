@@ -3,6 +3,12 @@ import { z } from 'zod';
 
 const cleanText = z.string().trim();
 
+/** A full http(s) URL, or a Drive file served through our own /api/media/<id> route. */
+const mediaUrl = z.string().trim().refine(
+  value => /^\/api\/media\/[\w-]{10,}$/.test(value) || z.string().url().safeParse(value).success,
+  'Invalid url'
+);
+
 export const saleInput = z.object({
   soldPrice: z.coerce.number().positive().max(1000000000),
   soldAt: z.coerce.date(),
@@ -26,7 +32,7 @@ export const carInput = z.object({
   description: cleanText.max(5000).default(''),
   features: z.array(cleanText.max(100)).max(30).default([]),
   images: z.array(z.object({
-    url: z.string().url(), publicId: z.string().optional(),
+    url: mediaUrl, publicId: z.string().optional(),
     illustrative: z.boolean().optional(), sourceUrl: z.string().url().optional(),
     attribution: z.string().max(300).optional(), license: z.string().max(100).optional(),
     licenseUrl: z.string().url().optional()
@@ -73,7 +79,7 @@ export const feedbackInput = z.object({
   message: cleanText.min(4, 'Write a few words.').max(1500),
   rating: z.coerce.number().int().min(1, 'Pick 1 to 5 stars.').max(5),
   image: z.object({
-    url: z.string().url().or(z.literal('')).default(''),
+    url: mediaUrl.or(z.literal('')).default(''),
     publicId: z.string().max(200).default('')
   }).default({ url: '', publicId: '' }),
   published: z.boolean().default(true)

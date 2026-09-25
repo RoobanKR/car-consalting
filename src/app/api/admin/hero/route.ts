@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { ApiError, adminRoute, readUpload } from '@/lib/server/http';
-import { getCloudinary, uploadBuffer } from '@/lib/server/cloudinary';
+import { storageReady, storeFile } from '@/lib/server/storage';
 import { HeroMedia } from '@/lib/server/models/HeroMedia';
 import { adminShape } from '@/lib/server/hero';
 
@@ -17,15 +17,16 @@ export const POST = adminRoute(async request => {
     mimeTypes: ['image/jpeg', 'image/png', 'image/webp', 'video/mp4', 'video/webm', 'video/quicktime'],
     message: 'Choose a JPEG, PNG or WebP image, or an MP4/WebM video.'
   });
-  if (!getCloudinary()) throw new ApiError(503, 'Cloudinary is not configured.');
+  if (!storageReady()) throw new ApiError(503, 'No media storage is configured.');
   const isVideo = file.mimetype.startsWith('video/');
-  const result = await uploadBuffer(file.buffer, { folder: 'car-consulting/hero', resource_type: isVideo ? 'video' : 'image' });
+  const result = await storeFile(file.buffer, { folder: 'hero', filename: file.filename, mimeType: file.mimetype });
   const media = await HeroMedia.create({
     type: isVideo ? 'video' : 'image',
-    url: result.secure_url,
-    publicId: result.public_id,
-    // Cloudinary serves a still frame for any video by swapping the extension.
-    posterUrl: isVideo ? result.secure_url.replace(/\.[^./]+$/, '.jpg') : '',
+    url: result.url,
+    publicId: result.publicId,
+    // Cloudinary serves a still frame for any video by swapping the extension;
+    // Drive has no equivalent, so those videos fall back to no poster.
+    posterUrl: isVideo && !result.publicId.startsWith('drive:') ? result.url.replace(/\.[^./]+$/, '.jpg') : '',
     label: String(file.label || file.filename || '').slice(0, 120),
     format: result.format || '', bytes: result.bytes || 0,
     width: result.width || 0, height: result.height || 0,
